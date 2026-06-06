@@ -136,6 +136,13 @@ ocr-idp benchmark --limit 3
 # (từ M9) đánh giá so ground-truth -> outputs/eval_<kind>.{md,csv}
 ocr-idp evaluate --kind pdf      # text-layer (chuẩn xác)
 ocr-idp evaluate --kind scan     # đường OCR (thấy lỗi mất dấu/thiếu)
+
+# (từ M7) xử lý cả thư mục -> 1 JSON/ file
+ocr-idp batch data/synthetic/order_slip -o outputs/json
+
+# (từ M10) chạy demo cục bộ (không cần Docker)
+ocr-idp serve-api                # REST API: http://127.0.0.1:8000/docs
+ocr-idp serve-web                # Web demo: http://localhost:8501
 ```
 
 Cũng có thể chạy bằng `python -m ocr_idp ...`.
@@ -179,7 +186,7 @@ pytest
 | M7 | Chuẩn hóa/validate đầy đủ (radio/table, %/datetime/giá) + Form B & C | ✅ |
 | M8 | Các engine OCR còn lại (Tesseract/EasyOCR/Paddle) + benchmark engine | ✅ |
 | M9 | Bộ đánh giá so ground-truth (accuracy/exact-match/P-R-F1/lỗi/thời gian → MD/CSV) | ✅ |
-| M10 | Demo: API + Web + CLI | ⏳ |
+| M10 | Demo: REST API (FastAPI) + Web (Streamlit) + CLI (batch/serve) | ✅ |
 | M11 | Hoàn thiện: README, test, dọn dẹp | ⏳ |
 
 ## Giấy phép

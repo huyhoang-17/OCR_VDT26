@@ -180,12 +180,87 @@ def process(
 
 @app.command()
 def batch(
-    input_dir: Path = typer.Argument(..., help="Thư mục chứa file đầu vào."),
+    input_dir: Path = typer.Argument(..., help="Thư mục chứa file PDF/ảnh đầu vào."),
+    form: Optional[str] = typer.Option(None, "--form", "-f", help="Loại biểu mẫu (mặc định: tự đoán)."),
+    engine: Optional[str] = typer.Option(None, "--engine", "-e", help="Engine OCR ghi đè."),
+    out_dir: Path = typer.Option(Path("outputs/json"), "--out", "-o", help="Thư mục JSON đầu ra."),
+    recursive: bool = typer.Option(False, "--recursive", "-r", help="Quét cả thư mục con."),
     config: Optional[Path] = typer.Option(None, "--config", "-c"),
 ) -> None:
-    """Chạy hàng loạt. (Khả dụng từ M7.)"""
-    console.print(_NOT_READY.format(milestone="M7"))
-    raise typer.Exit(code=0)
+    """Chạy pipeline hàng loạt cho mọi file PDF/ảnh trong thư mục -> JSON + tóm tắt."""
+    import json
+
+    from .pipeline import Pipeline
+
+    if not input_dir.is_dir():
+        console.print(f"[red]Không phải thư mục: {input_dir}[/red]")
+        raise typer.Exit(code=1)
+
+    exts = {".pdf", ".png", ".jpg", ".jpeg"}
+    globber = input_dir.rglob if recursive else input_dir.glob
+    files = sorted(p for p in globber("*") if p.suffix.lower() in exts)
+    if not files:
+        console.print(f"[yellow]Không tìm thấy file PDF/ảnh trong {input_dir}[/yellow]")
+        raise typer.Exit(code=0)
+
+    cfg = load_config(config)
+    if engine:
+        cfg.ocr.engine = engine
+    pipe = Pipeline(cfg)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    table = Table(title=f"Batch ({len(files)} file)", header_style="bold")
+    for col in ("File", "Biểu mẫu", "#cảnh báo", "Trạng thái"):
+        table.add_column(col)
+
+    ok = 0
+    for f in files:
+        try:
+            result = pipe.run(f, form_type=form)
+            (out_dir / f"{f.stem}.json").write_text(
+                json.dumps(result.output_json, ensure_ascii=False, indent=2), encoding="utf-8")
+            n_warn = len(result.output_json.get("_meta", {}).get("warnings", []))
+            table.add_row(f.name, result.form_type or "—", str(n_warn), "[green]OK[/green]")
+            ok += 1
+        except Exception as exc:  # noqa: BLE001
+            table.add_row(f.name, "—", "—", f"[red]Lỗi: {exc}[/red]")
+
+    console.print(table)
+    console.print(f"[green]Xong {ok}/{len(files)} file[/green] -> [cyan]{out_dir}[/cyan]")
+
+
+@app.command(name="serve-api")
+def serve_api(
+    host: str = typer.Option("127.0.0.1", "--host", help="Địa chỉ bind."),
+    port: int = typer.Option(8000, "--port", "-p", help="Cổng."),
+    reload: bool = typer.Option(False, "--reload", help="Tự nạp lại khi sửa code (dev)."),
+) -> None:
+    """Chạy REST API (FastAPI/uvicorn). Tài liệu: http://<host>:<port>/docs"""
+    try:
+        import uvicorn
+    except ImportError:
+        console.print("[red]Thiếu uvicorn.[/red] Cài: [cyan]pip install -e \".[api]\"[/cyan]")
+        raise typer.Exit(code=1)
+    console.print(f"[green]REST API:[/green] http://{host}:{port}/docs")
+    uvicorn.run("ocr_idp.api.app:app", host=host, port=port, reload=reload)
+
+
+@app.command(name="serve-web")
+def serve_web(
+    port: int = typer.Option(8501, "--port", "-p", help="Cổng Streamlit."),
+) -> None:
+    """Chạy web demo (Streamlit)."""
+    import importlib.util
+    import subprocess
+    import sys
+
+    if importlib.util.find_spec("streamlit") is None:
+        console.print("[red]Thiếu streamlit.[/red] Cài: [cyan]pip install -e \".[web]\"[/cyan]")
+        raise typer.Exit(code=1)
+    app_path = Path(__file__).resolve().parent / "webapp" / "app.py"
+    console.print(f"[green]Web demo:[/green] http://localhost:{port}")
+    subprocess.run([sys.executable, "-m", "streamlit", "run", str(app_path),
+                    "--server.port", str(port)], check=False)
 
 
 @app.command(name="make-data")
