@@ -109,8 +109,56 @@ class FormPlugin(ABC):
         specs = self.field_specs()
         fields = ExtractionOrchestrator(config).extract_fields(specs, context)
         apply_normalization(fields, specs)
+        self._maybe_llm(specs, fields, context, config)
         warnings = validate_fields(fields, specs, config.validation.min_confidence)
         return ExtractionResult(form_type=self.form_type, fields=fields, warnings=warnings)
+
+    def _maybe_llm(self, specs, fields, context, config: AppConfig) -> None:
+        """Bước LLM (tùy chọn): trích field strategy='llm' và/hoặc SỬA trường yếu.
+
+        Bỏ qua nếu không bật và không có field 'llm'; hoặc nếu LLM không khả dụng
+        (thiếu key/thư viện) -> giữ kết quả rule/anchor (fallback).
+        """
+        from ..extract.llm_claude import ClaudeExtractor, is_llm_available
+        from ..normalize.apply import apply_normalization as _apply
+        from ..types import FieldStatus, FieldValue
+
+        llm = config.extraction.llm
+        explicit = [s for s in specs if s.strategy == "llm"]
+        if not (llm.enabled or explicit):
+            return
+        if not is_llm_available(config):
+            for s in explicit:
+                fv = fields.get(s.name)
+                if fv is not None:
+                    fv.warnings.append("LLM không khả dụng (thiếu ANTHROPIC_API_KEY) — dùng rule/anchor")
+            return
+
+        # Chọn trường cần LLM: field 'llm' luôn có; nếu repair thì thêm field text yếu
+        targets = list(explicit)
+        if llm.enabled and llm.repair:
+            min_conf = config.validation.min_confidence
+            for s in specs:
+                if s.strategy in ("anchor", "rule", "layout") and s not in targets:
+                    fv = fields.get(s.name)
+                    weak = fv is None or fv.value in (None, "", []) or fv.confidence < min_conf
+                    if weak:
+                        targets.append(s)
+        if not targets:
+            return
+
+        values = ClaudeExtractor(config).extract(targets, context.text)
+        changed = False
+        for s in targets:
+            val = values.get(s.name)
+            if val is not None and val != "":
+                fields[s.name] = FieldValue(
+                    name=s.name, raw_value=str(val), confidence=0.9,
+                    source="llm", status=FieldStatus.OK,
+                )
+                changed = True
+        if changed:
+            _apply(fields, specs)  # chuẩn hóa lại các giá trị LLM trả về
 
     # -- Dựng JSON cuối cùng ------------------------------------------------ #
     def assemble(self, extraction: ExtractionResult) -> dict[str, Any]:

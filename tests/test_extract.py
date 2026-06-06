@@ -87,11 +87,12 @@ def test_orchestrator_checkbox_without_image() -> None:
     assert fv.value == [] and fv.status == FieldStatus.MISSING
 
 
-def test_orchestrator_llm_still_deferred() -> None:
+def test_orchestrator_llm_without_anchor_or_regex_is_missing() -> None:
+    # strategy 'llm' nhưng không có anchor/regex và không có LLM -> MISSING + cảnh báo
     specs = [FieldSpec(name="x", strategy="llm")]
     fv = ExtractionOrchestrator(load_config()).extract_fields(specs, _ctx([]))["x"]
     assert fv.status == FieldStatus.MISSING
-    assert any("M6" in w for w in fv.warnings)
+    assert any("llm" in w.lower() for w in fv.warnings)
 
 
 # ------------------------------- Plugin ------------------------------------ #

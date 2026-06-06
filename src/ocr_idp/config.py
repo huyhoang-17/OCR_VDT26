@@ -54,13 +54,17 @@ class AnchorConfig(BaseModel):
 
 
 class LLMConfig(BaseModel):
-    """Cấu hình trích xuất bằng Claude. Mặc định TẮT; bật theo trường."""
+    """Cấu hình trích xuất bằng Claude. Mặc định TẮT; bật theo trường hoặc repair.
+
+    LƯU Ý: KHÔNG gửi `temperature`/`top_p`/`budget_tokens` cho Opus 4.8/4.7 (API
+    trả 400). Dùng structured output (output_config.format) thay vì các tham số đó.
+    """
 
     enabled: bool = False
-    model: str = "claude-haiku-4-5"
-    model_hard: str = "claude-opus-4-8"
-    max_tokens: int = 1024
-    temperature: float = 0.0
+    model: str = "claude-opus-4-8"  # mặc định model mạnh nhất (xác nhận theo tài liệu claude-api)
+    max_tokens: int = 2048
+    # Khi enabled: dùng LLM bổ sung/sửa các trường thiếu hoặc độ tin cậy thấp
+    repair: bool = True
     api_key_env: str = "ANTHROPIC_API_KEY"
 
 
