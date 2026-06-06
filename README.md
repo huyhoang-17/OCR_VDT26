@@ -126,8 +126,12 @@ ocr-idp forms                   # liệt kê biểu mẫu hỗ trợ
 ocr-idp make-data
 
 # (từ M4) chạy 1 file -> JSON
-ocr-idp process data/synthetic/account_opening/sample_01.pdf `
+ocr-idp process data/synthetic/account_opening_individual/sample_01.pdf `
     --form account_opening_individual -o out.json
+
+# (từ M8) so sánh engine OCR (thời gian + chất lượng) -> outputs/benchmark.{md,csv}
+ocr-idp benchmark --limit 3
+#   chọn engine cụ thể: ocr-idp benchmark --engines rapidocr,tesseract
 
 # (từ M9) đánh giá so ground-truth
 ocr-idp evaluate
@@ -172,7 +176,7 @@ pytest
 | + | VietOCR (kéo lên sớm): RapidOCR(det)+VietOCR(rec) | ✅ |
 | M6 | Trích xuất nâng cao (layout-based + Claude LLM, fallback) | ✅ |
 | M7 | Chuẩn hóa/validate đầy đủ (radio/table, %/datetime/giá) + Form B & C | ✅ |
-| M8 | Các engine OCR còn lại + benchmark | ⏳ |
+| M8 | Các engine OCR còn lại (Tesseract/EasyOCR/Paddle) + benchmark engine | ✅ |
 | M9 | Bộ đánh giá (MD/CSV) | ⏳ |
 | M10 | Demo: API + Web + CLI | ⏳ |
 | M11 | Hoàn thiện: README, test, dọn dẹp | ⏳ |

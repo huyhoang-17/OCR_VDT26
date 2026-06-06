@@ -22,7 +22,9 @@ def _ensure_loaded() -> None:
     """Import các module engine để decorator chạy (đăng ký vào registry)."""
     from . import rapidocr_engine  # noqa: F401  (RapidOCR — mặc định)
     from . import vietocr_engine  # noqa: F401  (VietOCR — chất lượng cao tiếng Việt)
-    # Tesseract, EasyOCR, Paddle sẽ thêm ở M8.
+    from . import tesseract_engine  # noqa: F401  (Tesseract — M8)
+    from . import easyocr_engine  # noqa: F401  (EasyOCR — M8)
+    from . import paddle_engine  # noqa: F401  (PaddleOCR — M8)
 
 
 def available_engines() -> dict[str, bool]:

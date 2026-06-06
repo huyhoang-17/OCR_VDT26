@@ -228,6 +228,45 @@ def make_data(
 
 
 @app.command()
+def benchmark(
+    engines: Optional[str] = typer.Option(None, "--engines", "-e", help="DS engine (phẩy). Mặc định: tất cả đã đăng ký."),
+    limit: Optional[int] = typer.Option(None, "--limit", "-n", help="Giới hạn số ảnh scan."),
+    data_root: Path = typer.Option(Path("data"), "--data", help="Thư mục data (chứa synthetic/)."),
+    out_dir: Path = typer.Option(Path("outputs"), "--out", help="Thư mục ghi báo cáo."),
+    config: Optional[Path] = typer.Option(None, "--config", "-c"),
+) -> None:
+    """So sánh các engine OCR (thời gian + chất lượng) trên ảnh scan -> MD/CSV + đề xuất engine."""
+    from .eval.benchmark import benchmark_engines, recommend_default, write_reports
+
+    cfg = load_config(config)
+    names = [e.strip() for e in engines.split(",")] if engines else None
+    with console.status("[cyan]Đang chạy benchmark engine OCR...[/cyan]"):
+        result = benchmark_engines(engine_names=names, config=cfg, data_root=str(data_root), limit=limit)
+
+    if result["n_samples"] == 0:
+        console.print("[yellow]Không tìm thấy ảnh scan nào trong data/synthetic. Chạy: ocr-idp make-data[/yellow]")
+        raise typer.Exit(code=0)
+
+    table = Table(title=f"Benchmark engine OCR ({result['n_samples']} ảnh)", header_style="bold")
+    for col in ("Engine", "Sẵn sàng", "TG TB(ms)", "#dòng", "Sim bỏ dấu", "Sim có dấu", "Ghi chú"):
+        table.add_column(col)
+    from .eval.benchmark import _sorted_stats
+
+    for s in _sorted_stats(result["stats"]):
+        table.add_row(
+            s.engine, "[green]OK[/green]" if s.available else "[yellow]—[/yellow]",
+            str(s.avg_ms), str(s.avg_lines), str(s.sim_unaccented), str(s.sim_accented), s.note,
+        )
+    console.print(table)
+
+    paths = write_reports(result, out_dir=out_dir)
+    rec = recommend_default(result)
+    if rec:
+        console.print(f"[green]Đề xuất engine mặc định:[/green] [bold]{rec}[/bold]")
+    console.print(f"Đã ghi báo cáo: [cyan]{paths['markdown']}[/cyan], [cyan]{paths['csv']}[/cyan]")
+
+
+@app.command()
 def evaluate(
     config: Optional[Path] = typer.Option(None, "--config", "-c"),
 ) -> None:
