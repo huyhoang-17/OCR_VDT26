@@ -1,0 +1,26 @@
+# =============================================================================
+# Dependency mở rộng (optional). Cài thêm khi cần engine/chức năng tương ứng.
+# Lưu ý: torch/paddle khá nặng và CHƯA chắc có wheel cho Python 3.14 -> nên
+# dùng Docker (Python 3.11) hoặc venv 3.11/3.12 cho các engine này.
+# =============================================================================
+
+# --- LLM extraction (Claude) ---
+anthropic>=0.39
+
+# --- Demo: REST API + Web ---
+fastapi>=0.110
+uvicorn[standard]>=0.27
+python-multipart>=0.0.9
+streamlit>=1.31
+
+# --- OCR engines bổ sung (nặng) ---
+# vietocr>=0.3.13
+# torch>=2.1
+# torchvision>=0.16
+# easyocr>=1.7
+# paddleocr>=2.7
+# paddlepaddle>=2.6
+
+# --- Dev/test ---
+pytest>=7.4
+pytest-cov>=4.1

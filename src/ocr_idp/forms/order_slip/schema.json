@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ocr-idp/order_slip",
+  "title": "Phiếu lệnh giao dịch chứng khoán",
+  "type": "object",
+  "properties": {
+    "form_type": { "const": "order_slip" },
+    "account_number": { "type": ["string", "null"], "description": "Số tài khoản" },
+    "investor_name": { "type": ["string", "null"], "description": "Tên nhà đầu tư" },
+    "exchange": { "enum": ["HOSE", "HNX", "UPCOM", null], "description": "Sàn giao dịch" },
+    "side": { "enum": ["MUA", "BÁN", null], "description": "Chiều lệnh (radio)" },
+    "security_symbol": { "type": ["string", "null"], "description": "Mã chứng khoán" },
+    "order_type": {
+      "enum": ["LO", "ATO", "ATC", "MP", "MTL", null],
+      "description": "Loại lệnh"
+    },
+    "quantity": { "type": ["integer", "null"], "minimum": 0, "description": "Khối lượng" },
+    "price": {
+      "type": ["number", "null"],
+      "description": "Giá (null với lệnh ATO/ATC/MP/MTL)"
+    },
+    "order_datetime": {
+      "type": ["string", "null"],
+      "description": "Thời điểm đặt lệnh (ISO 8601: YYYY-MM-DDTHH:MM)"
+    },
+    "channel": { "enum": ["Quầy", "Online", "Điện thoại", null], "description": "Kênh đặt lệnh" },
+    "_meta": { "type": "object" }
+  },
+  "required": ["form_type", "account_number", "side", "security_symbol", "quantity"]
+}

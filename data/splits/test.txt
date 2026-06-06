@@ -1,0 +1,6 @@
+data/synthetic/account_opening_individual/sample_03.pdf
+data/synthetic/account_opening_individual/sample_03_scan.png
+data/synthetic/order_slip/sample_03.pdf
+data/synthetic/order_slip/sample_03_scan.png
+data/synthetic/shareholder_list/sample_03.pdf
+data/synthetic/shareholder_list/sample_03_scan.png

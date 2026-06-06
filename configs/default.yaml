@@ -1,0 +1,48 @@
+# =============================================================================
+# Cấu hình mặc định cho pipeline OCR-IDP.
+# Ghi đè bằng: file YAML khác (truyền --config) hoặc biến môi trường OCRIDP_*.
+# =============================================================================
+
+# Thư mục dữ liệu gốc (raw/processed/ground_truth/synthetic/splits)
+data_dir: data
+# Thư mục lưu artifacts trung gian để debug (ảnh tiền xử lý, OCR overlay, JSON...)
+output_dir: outputs
+log_level: INFO
+
+# --- [1] Tiền xử lý tài liệu -------------------------------------------------
+preprocess:
+  target_dpi: 300          # DPI khi render PDF -> ảnh
+  max_side: 2500           # giới hạn cạnh dài nhất (px) để OCR ổn định/nhanh
+  deskew: true             # tự phát hiện & xoay thẳng trang
+  denoise: true            # khử nhiễu
+  enhance_contrast: true   # tăng tương phản (CLAHE)
+  binarize: adaptive       # none | otsu | adaptive | sauvola
+  auto_crop: true          # cắt viền/khoảng trắng quanh vùng nội dung
+  # Phát hiện PDF có text-layer: nếu trang có >= ngưỡng ký tự thì bỏ OCR
+  text_layer_min_chars: 50
+
+# --- [2] OCR -----------------------------------------------------------------
+ocr:
+  engine: rapidocr         # rapidocr | vietocr | paddle | easyocr | tesseract
+  lang: vi
+  use_gpu: false
+  # Ngưỡng confidence tối thiểu để giữ 1 dòng/từ OCR (0..1)
+  min_text_confidence: 0.3
+
+# --- [4] Trích xuất trường ---------------------------------------------------
+extraction:
+  default_strategy: anchor # rule | anchor | layout | llm
+  anchor:
+    fuzzy_threshold: 80     # ngưỡng fuzzy match nhãn (0..100, rapidfuzz)
+  llm:
+    enabled: false          # mặc định TẮT; bật theo trường trong extraction.yaml
+    model: claude-haiku-4-5            # model thường (xác nhận id qua tài liệu claude-api)
+    model_hard: claude-opus-4-8        # model cho trường khó
+    max_tokens: 1024
+    temperature: 0
+    api_key_env: ANTHROPIC_API_KEY
+
+# --- [5] Chuẩn hóa & kiểm tra ------------------------------------------------
+validation:
+  min_confidence: 0.6      # dưới ngưỡng -> gắn cờ cần người kiểm tra
+  date_output_format: "%Y-%m-%d"

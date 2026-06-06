@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Môi trường & bí mật
+.env
+
+# Dữ liệu sinh ra / kết quả trung gian (giữ cấu trúc thư mục bằng .gitkeep)
+data/raw/*
+data/processed/*
+data/synthetic/*
+data/ground_truth/*
+!data/**/.gitkeep
+outputs/
+reports/
+logs/
+
+# Model cache (OCR)
+*.onnx
+.cache/
+~/.paddleocr/
+~/.EasyOCR/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ocr-idp/account_opening_individual",
+  "title": "Giấy đề nghị mở tài khoản giao dịch chứng khoán (cá nhân)",
+  "type": "object",
+  "properties": {
+    "form_type": { "const": "account_opening_individual" },
+    "investor": {
+      "type": "object",
+      "description": "Thông tin nhà đầu tư cá nhân",
+      "properties": {
+        "full_name": { "type": "string", "description": "Họ và tên" },
+        "date_of_birth": { "type": ["string", "null"], "format": "date" },
+        "gender": { "enum": ["Nam", "Nữ", null] },
+        "nationality": { "type": ["string", "null"], "description": "Quốc tịch" },
+        "id_document": {
+          "type": "object",
+          "description": "Giấy tờ tùy thân",
+          "properties": {
+            "type": { "enum": ["CCCD", "CMND", "Hộ chiếu", null] },
+            "number": { "type": ["string", "null"], "description": "Số giấy tờ" },
+            "issue_date": { "type": ["string", "null"], "format": "date" },
+            "issue_place": { "type": ["string", "null"], "description": "Nơi cấp" }
+          },
+          "required": ["type", "number"]
+        },
+        "permanent_address": { "type": ["string", "null"], "description": "Địa chỉ thường trú" },
+        "phone": { "type": ["string", "null"] },
+        "email": { "type": ["string", "null"] }
+      },
+      "required": ["full_name", "id_document"]
+    },
+    "account": {
+      "type": "object",
+      "properties": {
+        "account_number": { "type": ["string", "null"], "description": "Số tài khoản" },
+        "account_types": {
+          "type": "array",
+          "description": "Loại tài khoản đăng ký (checkbox)",
+          "items": { "enum": ["thường", "ký quỹ"] },
+          "uniqueItems": true
+        },
+        "services": {
+          "type": "array",
+          "description": "Dịch vụ đăng ký (checkbox)",
+          "items": { "enum": ["online", "sms", "email"] },
+          "uniqueItems": true
+        }
+      }
+    },
+    "registration_date": { "type": ["string", "null"], "format": "date" },
+    "signature_present": { "type": "boolean", "description": "Có chữ ký hay không" },
+    "_meta": { "type": "object", "description": "Thông tin pipeline (confidence, warnings)" }
+  },
+  "required": ["form_type", "investor", "registration_date"]
+}

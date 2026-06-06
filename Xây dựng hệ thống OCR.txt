@@ -1,0 +1,30 @@
+Tên chủ đề: Xây dựng hệ thống OCR và trích xuất dữ liệu tự động từ biểu mẫu chứng khoán tiếng Việt
+
+Mô tả: Hiện nay, nhiều nghiệp vụ trong lĩnh vực chứng khoán sử dụng các biểu mẫu hành chính, hồ sơ đăng ký, giấy đề nghị, danh sách nhà đầu tư, tài liệu scan hoặc PDF có cấu trúc bán cố định. Việc nhập liệu thủ công từ các biểu mẫu này sang hệ thống số tốn nhiều thời gian, dễ sai sót và khó mở rộng khi số lượng biểu mẫu tăng lên. Đề tài yêu cầu học viên nghiên cứu và xây dựng một pipeline Intelligent Document Processing từ đầu đến cuối cho bài toán nhận dạng biểu mẫu chứng khoán tiếng Việt. Đầu vào là các file PDF hoặc ảnh scan biểu mẫu; đầu ra là dữ liệu JSON có cấu trúc theo schema được cung cấp cho từng loại biểu mẫu. Học viên cần tự thiết kế pipeline bao gồm các bước như tiền xử lý tài liệu, OCR tiếng Việt, phát hiện và xử lý bảng/checkbox/radio nếu có, phân đoạn nội dung, trích xuất trường thông tin, chuẩn hóa giá trị, đánh giá độ chính xác và xây dựng chương trình demo. Trọng tâm là năng lực nghiên cứu, thiết kế pipeline, xử lý dữ liệu thực tế, lựa chọn mô hình/công cụ phù hợp, đánh giá định lượng và phân tích lỗi. Trong quá trình thực hiện, mentor có thể cung cấp gợi ý kỹ thuật, kinh nghiệm triển khai và các hướng cải tiến, nhưng học viên cần chủ động xây dựng giải pháp của mình.
+
+Các bước thực hiện:
+- Dữ liệu: Sử dụng tập biểu mẫu chứng khoán tiếng Việt được cung cấp, gồm nhiều loại eForm khác nhau. Mỗi mẫu có file PDF/ảnh đầu vào và schema JSON đầu ra cần trích xuất. Học viên cần xây dựng tập train/dev/test hoặc benchmark phù hợp, bao gồm ground-truth cho các trường quan trọng. 
+- Khảo sát bài toán: Phân tích đặc điểm tài liệu như PDF text-layer, PDF scan, ảnh mờ, lệch trang, bảng, checkbox/radio, dấu, chữ ký, trường nhiều dòng, lỗi font và lỗi dấu tiếng Việt. 
+- Tiền xử lý tài liệu: Nghiên cứu các phương pháp render PDF sang ảnh, xoay/chỉnh trang, tăng tương phản, khử nhiễu, crop vùng nội dung, tách trang và chuẩn hóa ảnh đầu vào. 
+- OCR: Thử nghiệm và lựa chọn OCR engine phù hợp cho tiếng Việt, ví dụ PaddleOCR, VietOCR, Tesseract, EasyOCR, RapidOCR hoặc mô hình khác. Cần đánh giá chất lượng nhận dạng tiếng Việt, khả năng giữ dấu, tốc độ xử lý và độ ổn định trên tài liệu scan. 
+- Layout và cấu trúc tài liệu: Nghiên cứu cách phát hiện dòng chữ, bảng, vùng thông tin, section, checkbox/radio button và các thành phần hình ảnh như dấu/chữ ký nếu cần. 
+- Trích xuất trường dữ liệu: Thiết kế phương pháp ánh xạ từ OCR text/layout sang JSON schema. Có thể sử dụng rule-based extraction, regex, fuzzy matching, layout-based extraction, LLM-assisted extraction hoặc kết hợp nhiều phương pháp. 
+- Chuẩn hóa và kiểm tra dữ liệu: Chuẩn hóa ngày tháng, số tiền, số giấy phép, mã định danh, tên tổ chức/cá nhân, địa chỉ và các trường lựa chọn. Xây dựng validator để phát hiện trường thiếu, sai định dạng hoặc có độ tin cậy thấp. 
+- Đánh giá: Xây dựng bộ đo gồm độ chính xác từng trường, exact match toàn biểu mẫu, precision/recall cho trường được trích xuất, lỗi OCR, lỗi format và thời gian xử lý. Lập bảng so sánh các phương án đã thử nghiệm. 
+- Demo: Xây dựng chương trình demo cho phép upload PDF/ảnh, chạy pipeline, hiển thị kết quả OCR, kết quả JSON và các lỗi/cảnh báo cần người dùng kiểm tra.
+
+Yêu cầu đầu ra:
+- Một pipeline hoàn chỉnh xử lý từ file PDF/ảnh đầu vào đến JSON đầu ra theo schema biểu mẫu được cung cấp. 
+- Hỗ trợ tối thiểu 3 loại biểu mẫu chứng khoán tiếng Việt
+- Chương trình demo dạng CLI, web app hoặc API đơn giản. Demo cần cho phép nhập tài liệu, chạy pipeline và hiển thị JSON đầu ra kèm thông tin kiểm chứng. 
+
+Tài liệu tham khảo:
+- PaddleOCR: https://github.com/PaddlePaddle/PaddleOCR 
+- VietOCR: https://github.com/pbcquoc/vietocr 
+- RapidOCR: https://github.com/RapidAI/RapidOCR 
+- Tesseract OCR: https://github.com/tesseract-ocr/tesseract 
+- EasyOCR: https://github.com/JaidedAI/EasyOCR 
+- LayoutParser: https://github.com/Layout-Parser/layout-parser 
+- Donut OCR-free Document Understanding: https://github.com/clovaai/donut 
+- TrOCR: https://huggingface.co/docs/transformers/model_doc/trocr 
+- RAG/LLM extraction, constrained JSON output và schema-based extraction có thể được mentor gợi ý thêm tùy hướng học viên lựa chọn.

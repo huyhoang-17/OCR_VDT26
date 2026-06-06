@@ -1,0 +1,40 @@
+# =============================================================================
+# Chạy đồng thời REST API (FastAPI :8000) và Web demo (Streamlit :8501).
+# Dùng chung 1 image, khác command. Mount ./data và ./outputs để giữ kết quả.
+#
+#   docker compose -f docker/docker-compose.yml up --build
+#   API : http://localhost:8000/docs
+#   Web : http://localhost:8501
+# =============================================================================
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: ocr-idp:latest
+    command: uvicorn ocr_idp.api.app:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    volumes:
+      - ../data:/app/data
+      - ../outputs:/app/outputs
+      - ../configs:/app/configs
+
+  web:
+    image: ocr-idp:latest
+    depends_on:
+      - api
+    command: streamlit run src/ocr_idp/webapp/app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    env_file:
+      - ../.env
+    environment:
+      # URL để Streamlit gọi tới REST API trong cùng compose network
+      - OCRIDP_API_URL=http://api:8000
+    volumes:
+      - ../data:/app/data
+      - ../outputs:/app/outputs
+      - ../configs:/app/configs

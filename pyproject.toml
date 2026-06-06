@@ -1,0 +1,77 @@
+# =============================================================================
+# OCR-IDP — Hệ thống OCR & trích xuất dữ liệu (IDP) cho biểu mẫu chứng khoán VN
+# =============================================================================
+# Quản lý dependency theo nhóm (extras) để bản cài cơ bản nhẹ; các engine nặng
+# (torch/paddle) được tách ra optional, cài khi cần.
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ocr-idp"
+version = "0.1.0"
+description = "OCR & Intelligent Document Processing for Vietnamese securities forms"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "OCR-IDP" }]
+
+# --- Dependency cơ bản: đủ để chạy pipeline với RapidOCR (ONNX, CPU) ---------
+dependencies = [
+  "pydantic>=2.5",
+  "pydantic-settings>=2.1",
+  "pyyaml>=6.0",
+  "python-dotenv>=1.0",
+  "typer>=0.12",
+  "rich>=13.0",
+  "numpy>=1.24",
+  "opencv-python-headless>=4.8",
+  "scikit-image>=0.22",
+  "Pillow>=10.0",
+  "PyMuPDF>=1.23",          # render PDF->ảnh + đọc text-layer (không cần poppler)
+  "rapidfuzz>=3.5",         # fuzzy matching cho anchor/label
+  "pandas>=2.0",
+  "tabulate>=0.9",
+  "reportlab>=4.0",         # sinh dữ liệu giả lập (PDF tiếng Việt)
+  "rapidocr-onnxruntime>=1.3",
+  "onnxruntime>=1.16",
+  "pytesseract>=0.3.10",
+]
+
+[project.optional-dependencies]
+# Engine OCR nặng (cần torch / paddle) — cài khi muốn so sánh / chất lượng cao
+vietocr = ["vietocr>=0.3.13", "torch>=2.1", "torchvision>=0.16"]
+easyocr = ["easyocr>=1.7"]
+paddle  = ["paddleocr>=2.7", "paddlepaddle>=2.6"]
+# Trích xuất bằng LLM (Claude)
+llm     = ["anthropic>=0.39"]
+# Demo
+api     = ["fastapi>=0.110", "uvicorn[standard]>=0.27", "python-multipart>=0.0.9"]
+web     = ["streamlit>=1.31"]
+# Phát triển / test
+dev     = ["pytest>=7.4", "pytest-cov>=4.1"]
+# Cài tất cả (trừ engine nặng paddle/torch — thêm thủ công nếu cần)
+full    = [
+  "anthropic>=0.39",
+  "fastapi>=0.110", "uvicorn[standard]>=0.27", "python-multipart>=0.0.9",
+  "streamlit>=1.31",
+  "pytest>=7.4", "pytest-cov>=4.1",
+]
+
+[project.scripts]
+ocr-idp = "ocr_idp.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+# Đóng gói schema + cấu hình trích xuất của từng plugin biểu mẫu
+"ocr_idp.forms" = ["**/*.json", "**/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

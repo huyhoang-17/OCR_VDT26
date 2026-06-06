@@ -1,0 +1,26 @@
+# =============================================================================
+# Dependency cơ bản (mirror phần [project.dependencies] của pyproject.toml).
+# Dùng cho ai thích `pip install -r requirements.txt` thay vì `pip install -e .`
+#
+# Engine OCR nặng & demo nằm ở các file extras — xem README:
+#   - requirements-extra.txt  (vietocr/easyocr/paddle/llm/api/web)
+# Khuyến nghị dùng Docker (docker/Dockerfile) để có sẵn Tesseract + poppler.
+# =============================================================================
+pydantic>=2.5
+pydantic-settings>=2.1
+pyyaml>=6.0
+python-dotenv>=1.0
+typer>=0.12
+rich>=13.0
+numpy>=1.24
+opencv-python-headless>=4.8
+scikit-image>=0.22
+Pillow>=10.0
+PyMuPDF>=1.23
+rapidfuzz>=3.5
+pandas>=2.0
+tabulate>=0.9
+reportlab>=4.0
+rapidocr-onnxruntime>=1.3
+onnxruntime>=1.16
+pytesseract>=0.3.10

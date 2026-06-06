@@ -1,0 +1,33 @@
+# =============================================================================
+# Cấu hình logging (logging.config.dictConfig). Tùy chọn — nếu không tồn tại
+# thì logging_conf.py dùng cấu hình mặc định (console + file outputs/logs).
+# =============================================================================
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  simple:
+    format: "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s"
+    datefmt: "%H:%M:%S"
+
+handlers:
+  console:
+    # StreamHandler thường (ổn định mọi terminal/khi bị redirect).
+    # Muốn log màu đẹp kiểu rich: xóa file này để dùng cấu hình mặc định trong
+    # logging_conf.py (đã cấu hình RichHandler an toàn cho Windows).
+    class: logging.StreamHandler
+    formatter: simple
+    level: INFO
+    stream: ext://sys.stderr
+  file:
+    class: logging.handlers.RotatingFileHandler
+    filename: logs/ocr_idp.log
+    maxBytes: 5242880      # 5 MB
+    backupCount: 3
+    encoding: utf-8
+    formatter: simple
+    level: DEBUG
+
+root:
+  level: DEBUG
+  handlers: [console, file]
