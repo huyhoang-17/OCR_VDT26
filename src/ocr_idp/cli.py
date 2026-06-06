@@ -268,11 +268,43 @@ def benchmark(
 
 @app.command()
 def evaluate(
+    kind: str = typer.Option("pdf", "--kind", "-k", help="Đầu vào đánh giá: pdf (text-layer) | scan (ảnh OCR)."),
+    form: Optional[str] = typer.Option(None, "--form", "-f", help="Chỉ đánh giá 1 form_type (mặc định: tất cả)."),
+    data_root: Path = typer.Option(Path("data"), "--data", help="Thư mục data (ground_truth/ + synthetic/)."),
+    out_dir: Path = typer.Option(Path("outputs"), "--out", help="Thư mục ghi báo cáo."),
     config: Optional[Path] = typer.Option(None, "--config", "-c"),
 ) -> None:
-    """Đánh giá kết quả so với ground-truth -> bảng MD/CSV. (Khả dụng từ M9.)"""
-    console.print(_NOT_READY.format(milestone="M9"))
-    raise typer.Exit(code=0)
+    """Đánh giá kết quả so với ground-truth -> số liệu + báo cáo MD/CSV."""
+    from .eval.report import evaluate_dataset, write_reports
+
+    cfg = load_config(config)
+    forms = [form] if form else None
+    with console.status(f"[cyan]Đang đánh giá ({kind})...[/cyan]"):
+        report = evaluate_dataset(config=cfg, kind=kind, forms=forms, data_root=str(data_root))
+
+    if not report.samples:
+        console.print("[yellow]Không tìm thấy cặp (ground-truth, input). Chạy: ocr-idp make-data[/yellow]")
+        raise typer.Exit(code=0)
+
+    o = report.overall
+    summary = Table(title=f"Đánh giá ({kind}) — {o.n_samples} mẫu", header_style="bold")
+    for col in ("Form", "#mẫu", "Exact form", "Acc trường", "P", "R", "F1"):
+        summary.add_column(col)
+
+    def _pct(x: float) -> str:
+        return f"{x * 100:.1f}%"
+
+    for ft, fa in sorted(report.form_aggs.items()):
+        summary.add_row(ft, str(fa.n_samples), _pct(fa.form_exact_rate), _pct(fa.field_accuracy),
+                        _pct(fa.prf.precision), _pct(fa.prf.recall), _pct(fa.prf.f1))
+    summary.add_row("[bold](tất cả)[/bold]", str(o.n_samples), _pct(o.form_exact_rate),
+                    _pct(o.field_accuracy), _pct(o.prf.precision), _pct(o.prf.recall), _pct(o.prf.f1))
+    console.print(summary)
+    if o.errors:
+        console.print(f"Lỗi theo loại: [yellow]{dict(o.errors)}[/yellow]")
+
+    paths = write_reports(report, out_dir=out_dir)
+    console.print(f"Đã ghi báo cáo: [cyan]{paths['markdown']}[/cyan], [cyan]{paths['csv']}[/cyan]")
 
 
 if __name__ == "__main__":

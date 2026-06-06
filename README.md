@@ -133,8 +133,9 @@ ocr-idp process data/synthetic/account_opening_individual/sample_01.pdf `
 ocr-idp benchmark --limit 3
 #   chọn engine cụ thể: ocr-idp benchmark --engines rapidocr,tesseract
 
-# (từ M9) đánh giá so ground-truth
-ocr-idp evaluate
+# (từ M9) đánh giá so ground-truth -> outputs/eval_<kind>.{md,csv}
+ocr-idp evaluate --kind pdf      # text-layer (chuẩn xác)
+ocr-idp evaluate --kind scan     # đường OCR (thấy lỗi mất dấu/thiếu)
 ```
 
 Cũng có thể chạy bằng `python -m ocr_idp ...`.
@@ -177,7 +178,7 @@ pytest
 | M6 | Trích xuất nâng cao (layout-based + Claude LLM, fallback) | ✅ |
 | M7 | Chuẩn hóa/validate đầy đủ (radio/table, %/datetime/giá) + Form B & C | ✅ |
 | M8 | Các engine OCR còn lại (Tesseract/EasyOCR/Paddle) + benchmark engine | ✅ |
-| M9 | Bộ đánh giá (MD/CSV) | ⏳ |
+| M9 | Bộ đánh giá so ground-truth (accuracy/exact-match/P-R-F1/lỗi/thời gian → MD/CSV) | ✅ |
 | M10 | Demo: API + Web + CLI | ⏳ |
 | M11 | Hoàn thiện: README, test, dọn dẹp | ⏳ |
 
