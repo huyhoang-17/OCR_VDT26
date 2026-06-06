@@ -4,10 +4,13 @@ Lệnh:
     ocr-idp version          # phiên bản
     ocr-idp info             # kiểm tra môi trường (Tesseract/poppler) + cấu hình
     ocr-idp forms            # liệt kê các plugin biểu mẫu đã đăng ký
-    ocr-idp process <file>   # chạy pipeline 1 file  (khả dụng từ M4)
-    ocr-idp batch <dir>      # chạy hàng loạt        (khả dụng từ M7)
-    ocr-idp make-data        # sinh dữ liệu giả lập  (khả dụng từ M1)
-    ocr-idp evaluate         # đánh giá so ground-truth (khả dụng từ M9)
+    ocr-idp make-data        # sinh dữ liệu giả lập + ground-truth
+    ocr-idp process <file>   # chạy pipeline 1 file -> JSON
+    ocr-idp batch <dir>      # chạy hàng loạt cả thư mục
+    ocr-idp benchmark        # so sánh engine OCR -> MD/CSV
+    ocr-idp evaluate         # đánh giá so ground-truth -> MD/CSV
+    ocr-idp serve-api        # chạy REST API (FastAPI)
+    ocr-idp serve-web        # chạy web demo (Streamlit)
 
 Import nặng (OCR/engine) được nạp *bên trong* từng lệnh để `--help` luôn nhanh.
 """
@@ -38,8 +41,6 @@ app = typer.Typer(
 # legacy_windows=False: tránh đường render Win32 console (lỗi với Unicode khi
 # output không phải terminal thật, vd bị pipe/redirect).
 console = Console(legacy_windows=False)
-
-_NOT_READY = "[yellow]Chưa khả dụng ở mốc hiện tại[/yellow] — sẽ có ở {milestone}."
 
 
 @app.command()
@@ -108,14 +109,14 @@ def info(
 def forms() -> None:
     """Liệt kê các plugin biểu mẫu đã đăng ký."""
     try:
-        from .forms.base import list_forms  # nạp lười: registry sẽ có từ M4
+        from .forms.base import list_forms  # nạp lười registry plugin
 
         registered = list_forms()
     except Exception:  # noqa: BLE001
         registered = {}
 
     if not registered:
-        console.print("Chưa có plugin biểu mẫu nào được đăng ký (sẽ thêm từ M4).")
+        console.print("Chưa có plugin biểu mẫu nào được đăng ký.")
         return
 
     table = Table(title="Biểu mẫu hỗ trợ", show_header=True, header_style="bold")

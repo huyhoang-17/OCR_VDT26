@@ -1,1 +1,1 @@
-"""[7a] REST API (FastAPI). (Sẽ hiện thực ở mốc M10.)"""
+"""[7a] REST API (FastAPI). App: `ocr_idp.api.app:app` (xem app.py)."""

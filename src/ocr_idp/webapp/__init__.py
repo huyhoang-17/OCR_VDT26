@@ -1,1 +1,1 @@
-"""[7b] Web demo (Streamlit). (Sẽ hiện thực ở mốc M10.)"""
+"""[7b] Web demo (Streamlit). App: webapp/app.py (chạy: ocr-idp serve-web)."""

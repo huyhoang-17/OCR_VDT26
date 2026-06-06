@@ -6,10 +6,6 @@
 Mỗi bước là một component độc lập, được nạp "lười" (lazy import) để:
   * khởi động/`--help` nhẹ, không kéo theo engine nặng;
   * dễ thay thế từng bước mà không ảnh hưởng phần còn lại.
-
-GHI CHÚ MỐC PHÁT TRIỂN:
-  * M0 (hiện tại): chỉ có khung + hợp đồng interface; `run()` chưa khả dụng.
-  * M2: nối bước tiền xử lý. M3: nối OCR. M4: nối trích xuất tối thiểu (MVP).
 """
 
 from __future__ import annotations
@@ -42,7 +38,7 @@ class PipelineResult:
 class Pipeline:
     """Điểm vào chính: cấu hình -> chạy các bước -> JSON.
 
-    Cách dùng (khi đã hoàn thiện ở M4+):
+    Cách dùng:
         pipe = Pipeline(load_config())
         result = pipe.run("form.pdf", form_type="account_opening_individual")
         print(result.output_json)
@@ -50,11 +46,9 @@ class Pipeline:
 
     def __init__(self, config: AppConfig | None = None) -> None:
         self.config = config or load_config()
-        # Các bước được khởi tạo lười ở những mốc tương ứng (giữ None ở M0).
-        self._preprocessor = None  # M2
-        self._ocr_engine = None  # M3
-        self._layout = None  # M5
-        self._extractor = None  # M4/M6
+        # Các bước nặng được khởi tạo lười (chỉ khi thực sự cần).
+        self._preprocessor = None
+        self._ocr_engine = None
 
     # --------------------------------------------------------------------- #
     # Khởi tạo lười từng bước

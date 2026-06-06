@@ -1,4 +1,5 @@
 """[6] Đánh giá: accuracy/trường, exact-match, P/R, lỗi OCR/format, thời gian.
 
-Xuất bảng so sánh engine/phương pháp ra Markdown + CSV. (Sẽ hiện thực ở M9.)
+  * benchmark.py — so sánh các engine OCR (thời gian + chất lượng) -> MD/CSV.
+  * metrics.py + report.py — đánh giá so ground-truth -> MD/CSV.
 """

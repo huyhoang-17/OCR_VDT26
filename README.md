@@ -4,8 +4,9 @@ Pipeline **end-to-end**: nhận PDF/ảnh scan biểu mẫu chứng khoán tiế
 xuất **JSON có cấu trúc** đúng schema cho từng loại biểu mẫu (Intelligent
 Document Processing).
 
-> Trạng thái: đang phát triển theo mốc. **M0 — khung dự án** đã xong. Xem
-> [Lộ trình](#lộ-trình-roadmap).
+> Trạng thái: **hoàn thiện** — toàn bộ 11 mốc (M0–M11) đã xong & kiểm chứng
+> (pipeline + 3 biểu mẫu + 5 engine + benchmark + đánh giá + API/Web/CLI).
+> Xem [Lộ trình](#lộ-trình-roadmap) và [Kết quả](#kết-quả-trên-dữ-liệu-giả-lập).
 
 ---
 
@@ -47,13 +48,14 @@ cấu hình trích xuất + chuẩn hóa/validate riêng → thêm biểu mẫu 
 ├── configs/            # default.yaml (pipeline) + logging.yaml
 ├── data/               # raw / processed / ground_truth / synthetic / splits
 ├── docker/             # Dockerfile + docker-compose.yml
-├── scripts/            # make_synthetic.py, run_end_to_end.py, run_eval.py
+├── scripts/            # make_synthetic.py, run_end_to_end.py, run_benchmark.py, run_eval.py
 ├── src/ocr_idp/        # mã nguồn (package)
 │   ├── config.py types.py pipeline.py cli.py logging_conf.py
 │   ├── preprocess/ ocr/ layout/ extract/ normalize/ validate/
 │   ├── forms/          # plugin biểu mẫu
+│   ├── forms/<form>/   # schema.json + extraction.yaml + plugin.py
 │   ├── eval/ api/ webapp/
-└── tests/              # pytest
+└── tests/              # pytest (115 test)
 ```
 
 ---
@@ -162,12 +164,69 @@ data/synthetic/<form_type>/...                 # dữ liệu giả lập (M1)
 data/splits/{train,dev,test}.txt               # chia tập benchmark
 ```
 
+## REST API
+
+```powershell
+# Chạy server (hoặc dùng Docker)
+pip install -e ".[api]"
+ocr-idp serve-api               # http://127.0.0.1:8000/docs
+```
+
+| Method | Endpoint | Mô tả |
+|---|---|---|
+| GET | `/health` | trạng thái + phiên bản + engine mặc định |
+| GET | `/forms` | danh sách biểu mẫu hỗ trợ |
+| GET | `/engines` | engine OCR + tình trạng cài đặt |
+| POST | `/process` | upload PDF/ảnh (+ `form_type`, `engine` tùy chọn) → JSON theo schema |
+
+```bash
+curl -X POST http://localhost:8000/process \
+  -F "file=@data/synthetic/order_slip/sample_01.pdf" \
+  -F "form_type=order_slip"
+# -> { "form_type": "...", "output": { ...JSON theo schema... },
+#      "warnings": [...], "timings_ms": {...}, "ocr_engine": ["textlayer"] }
+```
+
+## Thêm biểu mẫu mới (plugin)
+
+Thêm 1 loại biểu mẫu = tạo thư mục `src/ocr_idp/forms/<form_type>/` với 3 file —
+**không sửa core**:
+
+1. `schema.json` — JSON Schema mô tả output mong muốn.
+2. `extraction.yaml` — khai báo từng trường: `name` (dot-path), `strategy`
+   (`anchor` | `rule` | `layout` | `checkbox` | `radio` | `table` | `signature` |
+   `llm`), `anchor`/`regex`/`options`, `normalizer`, `required`.
+3. `plugin.py` — lớp con `FormPlugin` gắn `@register_form`, khai báo `form_type`,
+   `title`, `classify_keywords` (để tự nhận diện).
+
+Rồi import nó trong `forms/base.py::_ensure_loaded()`. Pipeline tự dùng plugin
+mới qua registry (`ocr-idp forms` sẽ liệt kê nó). Xem `forms/order_slip/` (radio +
+số) và `forms/shareholder_list/` (bảng) làm mẫu.
+
+`normalizer` có sẵn: `string`, `date`, `datetime`, `int`, `money`, `price`,
+`percent`, `phone`, `email`, `id_number`, `account_number`, `symbol`.
+
 ## Kiểm thử
 
 ```powershell
 pip install -e ".[dev]"
-pytest
+pytest                # 115 test
 ```
+
+---
+
+## Kết quả (trên dữ liệu giả lập)
+
+Đo bằng `ocr-idp evaluate` (so ground-truth), engine mặc định `rapidocr`:
+
+| Đầu vào | Exact-match form | Accuracy trường | Ghi chú |
+|---|--:|--:|---|
+| **PDF (text-layer)** | 100% | 100% (96/96) | fast-path, chính xác tuyệt đối |
+| **Ảnh scan (OCR)** | 0% | ~54% | mất dấu (`ocr_error`) + checkbox/radio trên ảnh nghiêng-nhiễu (`missing`) |
+
+→ Text-layer cho kết quả hoàn hảo; ảnh scan tiếng Việt nên dùng **VietOCR**
+(giữ dấu, chạy trong Docker) và/hoặc bật **LLM repair** (`extraction.llm.enabled`)
+để khôi phục dấu. `ocr-idp benchmark` định lượng chênh lệch giữ-dấu giữa các engine.
 
 ---
 
@@ -187,7 +246,7 @@ pytest
 | M8 | Các engine OCR còn lại (Tesseract/EasyOCR/Paddle) + benchmark engine | ✅ |
 | M9 | Bộ đánh giá so ground-truth (accuracy/exact-match/P-R-F1/lỗi/thời gian → MD/CSV) | ✅ |
 | M10 | Demo: REST API (FastAPI) + Web (Streamlit) + CLI (batch/serve) | ✅ |
-| M11 | Hoàn thiện: README, test, dọn dẹp | ⏳ |
+| M11 | Hoàn thiện: README, test, dọn dẹp | ✅ |
 
 ## Giấy phép
 
