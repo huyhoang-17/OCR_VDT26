@@ -75,6 +75,21 @@ def info(
             env.add_row(f"python: {mod}", "[yellow]Thiếu[/yellow]")
     console.print(env)
 
+    # --- Engine OCR đã đăng ký --------------------------------------------- #
+    try:
+        from .ocr.registry import available_engines
+
+        engines = available_engines()
+        eng_table = Table(title="Engine OCR", show_header=True, header_style="bold")
+        eng_table.add_column("Engine")
+        eng_table.add_column("Sẵn sàng")
+        for name, ok in engines.items():
+            mark = "[green]OK[/green]" if ok else "[yellow]Chưa cài dep[/yellow]"
+            eng_table.add_row(name + (" (mặc định)" if name == cfg.ocr.engine else ""), mark)
+        console.print(eng_table)
+    except Exception as exc:  # noqa: BLE001
+        console.print(f"[yellow]Không liệt kê được engine OCR: {exc}[/yellow]")
+
     # --- Tóm tắt cấu hình -------------------------------------------------- #
     summary = Table(title="Cấu hình", show_header=True, header_style="bold")
     summary.add_column("Khóa")
@@ -114,14 +129,53 @@ def forms() -> None:
 @app.command()
 def process(
     input_file: Path = typer.Argument(..., help="File PDF/ảnh đầu vào."),
-    form: Optional[str] = typer.Option(None, "--form", "-f", help="Loại biểu mẫu (form_type)."),
+    form: Optional[str] = typer.Option(None, "--form", "-f", help="Loại biểu mẫu (mặc định: tự đoán)."),
     engine: Optional[str] = typer.Option(None, "--engine", "-e", help="Engine OCR ghi đè."),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="File JSON đầu ra."),
     config: Optional[Path] = typer.Option(None, "--config", "-c", help="File cấu hình YAML."),
 ) -> None:
-    """Chạy pipeline trên 1 file -> JSON theo schema. (Khả dụng từ M4.)"""
-    console.print(_NOT_READY.format(milestone="M4 (MVP end-to-end)"))
-    raise typer.Exit(code=0)
+    """Chạy pipeline trên 1 file PDF/ảnh -> JSON theo schema + cảnh báo cần kiểm tra."""
+    import json
+
+    from .pipeline import Pipeline
+
+    if not input_file.exists():
+        console.print(f"[red]Không tìm thấy file: {input_file}[/red]")
+        raise typer.Exit(code=1)
+
+    cfg = load_config(config)
+    if engine:
+        cfg.ocr.engine = engine
+
+    try:
+        result = Pipeline(cfg).run(input_file, form_type=form)
+    except (KeyError, ValueError, RuntimeError) as exc:
+        console.print(f"[red]Lỗi: {exc}[/red]")
+        raise typer.Exit(code=1)
+
+    json_str = json.dumps(result.output_json, ensure_ascii=False, indent=2)
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json_str, encoding="utf-8")
+        console.print(f"[green]Đã ghi JSON:[/green] {output}")
+    else:
+        print(json_str)
+
+    # Bảng cảnh báo (trường cần người kiểm tra)
+    warnings = result.output_json.get("_meta", {}).get("warnings", [])
+    console.print(
+        f"\n[bold]{result.form_type}[/bold] | engine={result.output_json['_meta'].get('ocr_engine')} "
+        f"| {result.timings_ms}"
+    )
+    if warnings:
+        wt = Table(title=f"Cảnh báo cần kiểm tra ({len(warnings)})", header_style="bold yellow")
+        wt.add_column("#", justify="right")
+        wt.add_column("Nội dung")
+        for i, w in enumerate(warnings, 1):
+            wt.add_row(str(i), w)
+        console.print(wt)
+    else:
+        console.print("[green]Không có cảnh báo.[/green]")
 
 
 @app.command()

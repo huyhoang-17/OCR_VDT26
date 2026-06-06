@@ -16,7 +16,9 @@ preprocess:
   deskew: true             # tự phát hiện & xoay thẳng trang
   denoise: true            # khử nhiễu
   enhance_contrast: true   # tăng tương phản (CLAHE)
-  binarize: adaptive       # none | otsu | adaptive | sauvola
+  # none = giữ ảnh xám (tốt nhất cho OCR học sâu RapidOCR/VietOCR).
+  # otsu/adaptive/sauvola: hữu ích cho Tesseract hoặc ảnh nền bẩn.
+  binarize: none           # none | otsu | adaptive | sauvola
   auto_crop: true          # cắt viền/khoảng trắng quanh vùng nội dung
   # Phát hiện PDF có text-layer: nếu trang có >= ngưỡng ký tự thì bỏ OCR
   text_layer_min_chars: 50

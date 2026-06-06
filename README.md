@@ -166,8 +166,8 @@ pytest
 | M0 | Khung dự án, config, types, CLI, Docker, README | ✅ |
 | M1 | 3 schema + sinh dữ liệu giả lập + ground-truth | ✅ |
 | M2 | Tiền xử lý + test | ✅ |
-| M3 | OCR (RapidOCR + interface + registry) + test | ⏳ |
-| M4 | Trích xuất tối thiểu + Form A + **MVP end-to-end** | ⏳ |
+| M3 | OCR (RapidOCR + interface + registry) + test | ✅ |
+| M4 | Trích xuất tối thiểu + Form A + **MVP end-to-end** | ✅ |
 | M5 | Layout (bảng, checkbox, dấu/chữ ký) | ⏳ |
 | M6 | Trích xuất nâng cao (layout + Claude) | ⏳ |
 | M7 | Chuẩn hóa/validate đầy đủ + Form B & C | ⏳ |

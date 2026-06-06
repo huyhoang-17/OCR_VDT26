@@ -31,7 +31,9 @@ class PreprocessConfig(BaseModel):
     deskew: bool = True
     denoise: bool = True
     enhance_contrast: bool = True
-    binarize: str = "adaptive"  # none | otsu | adaptive | sauvola
+    # none = giữ ảnh xám (tốt cho OCR học sâu: RapidOCR/VietOCR). otsu/adaptive/
+    # sauvola hữu ích cho Tesseract hoặc ảnh nền bẩn.
+    binarize: str = "none"  # none | otsu | adaptive | sauvola
     auto_crop: bool = True
     text_layer_min_chars: int = 50
 
