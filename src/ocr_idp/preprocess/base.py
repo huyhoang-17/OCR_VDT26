@@ -51,6 +51,16 @@ def rotate_image(img: np.ndarray, angle: float, border: int = 255) -> np.ndarray
     )
 
 
+def crop_bbox(img: np.ndarray, x1: float, y1: float, x2: float, y2: float, pad: int = 2):
+    """Cắt vùng theo hộp (kẹp trong biên ảnh, có đệm). Trả None nếu vùng suy biến."""
+    h, w = img.shape[:2]
+    ix1, iy1 = max(0, int(x1) - pad), max(0, int(y1) - pad)
+    ix2, iy2 = min(w, int(x2) + pad), min(h, int(y2) + pad)
+    if ix2 - ix1 < 2 or iy2 - iy1 < 2:
+        return None
+    return img[iy1:iy2, ix1:ix2]
+
+
 def limit_size(img: np.ndarray, max_side: int) -> tuple[np.ndarray, float]:
     """Thu nhỏ nếu cạnh dài > max_side (giữ tỉ lệ). Trả về (ảnh, hệ số scale đã áp)."""
     h, w = img.shape[:2]

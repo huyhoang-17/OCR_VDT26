@@ -168,7 +168,8 @@ pytest
 | M2 | Tiền xử lý + test | ✅ |
 | M3 | OCR (RapidOCR + interface + registry) + test | ✅ |
 | M4 | Trích xuất tối thiểu + Form A + **MVP end-to-end** | ✅ |
-| M5 | Layout (bảng, checkbox, dấu/chữ ký) | ⏳ |
+| M5 | Layout (checkbox/radio, dấu/chữ ký, nền bảng) | ✅ |
+| + | VietOCR (kéo lên sớm): RapidOCR(det)+VietOCR(rec) | ✅ |
 | M6 | Trích xuất nâng cao (layout + Claude) | ⏳ |
 | M7 | Chuẩn hóa/validate đầy đủ + Form B & C | ⏳ |
 | M8 | Các engine OCR còn lại + benchmark | ⏳ |

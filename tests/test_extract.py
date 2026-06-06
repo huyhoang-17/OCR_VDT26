@@ -79,13 +79,19 @@ def test_rule_regex_registration_date() -> None:
 
 
 # --------------------------- Orchestrator/deferred ------------------------- #
-def test_orchestrator_deferred_checkbox() -> None:
-    specs = [FieldSpec(name="account.account_types", strategy="checkbox")]
+def test_orchestrator_checkbox_without_image() -> None:
+    # Checkbox là extractor THẬT (M5) nhưng thiếu ảnh -> trả [] + cảnh báo
+    specs = [FieldSpec(name="account.account_types", strategy="checkbox", options={"thường": "Thường"})]
     fields = ExtractionOrchestrator(load_config()).extract_fields(specs, _ctx([]))
     fv = fields["account.account_types"]
+    assert fv.value == [] and fv.status == FieldStatus.MISSING
+
+
+def test_orchestrator_llm_still_deferred() -> None:
+    specs = [FieldSpec(name="x", strategy="llm")]
+    fv = ExtractionOrchestrator(load_config()).extract_fields(specs, _ctx([]))["x"]
     assert fv.status == FieldStatus.MISSING
-    assert fv.value == []  # default_factory list
-    assert any("M5" in w for w in fv.warnings)
+    assert any("M6" in w for w in fv.warnings)
 
 
 # ------------------------------- Plugin ------------------------------------ #
@@ -143,3 +149,21 @@ def test_end_to_end_pdf_matches_ground_truth() -> None:
     assert out["investor"]["email"] == gt["investor"]["email"]
     assert out["registration_date"] == gt["registration_date"]
     assert out["investor"]["date_of_birth"] == gt["investor"]["date_of_birth"]
+
+
+@pytest.mark.parametrize("stem", ["sample_01", "sample_02", "sample_03"])
+def test_checkbox_signature_match_gt_pdf(stem: str) -> None:
+    """M5: checkbox (account_types/services) + chữ ký khớp ground-truth trên PDF."""
+    pytest.importorskip("fitz")
+    pdf = Path(f"data/synthetic/account_opening_individual/{stem}.pdf")
+    gt_path = Path(f"data/ground_truth/account_opening_individual/{stem}.json")
+    if not pdf.exists() or not gt_path.exists():
+        pytest.skip("Chưa có dữ liệu synthetic")
+
+    from ocr_idp.pipeline import Pipeline
+
+    gt = json.loads(gt_path.read_text(encoding="utf-8"))
+    out = Pipeline(load_config()).run(pdf).output_json
+    assert sorted(out["account"]["account_types"]) == sorted(gt["account"]["account_types"])
+    assert sorted(out["account"]["services"]) == sorted(gt["account"]["services"])
+    assert out["signature_present"] == gt["signature_present"]

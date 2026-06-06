@@ -87,17 +87,30 @@ def normalize_choice(raw: str, choices: list[str], threshold: int = 80) -> tuple
 
 
 def apply_normalization(fields: dict[str, FieldValue], specs: list) -> None:
-    """Đặt `.value` đã chuẩn hóa cho từng FieldValue dựa trên FieldSpec tương ứng."""
+    """Đặt `.value` đã chuẩn hóa cho từng FieldValue dựa trên FieldSpec tương ứng.
+
+    Lưu ý: các extractor dựa-trên-layout (checkbox/chữ ký) đã tự đặt `.value`
+    (list/bool); khi field KHÔNG khai báo normalizer/choices ta KHÔNG ghi đè giá
+    trị đó — chỉ điền value từ raw_value khi extractor chưa đặt (value còn None).
+    """
     spec_by_name = {s.name: s for s in specs}
     for name, fv in fields.items():
         spec = spec_by_name.get(name)
-        if spec is None or fv.raw_value is None:
+        if spec is None:
             continue
         if getattr(spec, "choices", None):
+            if fv.raw_value is None:
+                continue
             value, warns = normalize_choice(fv.raw_value, spec.choices)
         elif spec.normalizer and spec.normalizer in NORMALIZERS:
+            if fv.raw_value is None:
+                continue
             value, warns = NORMALIZERS[spec.normalizer](fv.raw_value)
         else:
-            value, warns = clean_spaces(fv.raw_value), []
+            # Không có normalizer: giữ value extractor đã đặt; chỉ điền từ raw_value
+            # nếu value còn trống (vd anchor text thuần không khai báo normalizer).
+            if fv.value is None and fv.raw_value is not None:
+                fv.value = clean_spaces(fv.raw_value)
+            continue
         fv.value = value
         fv.warnings.extend(warns)

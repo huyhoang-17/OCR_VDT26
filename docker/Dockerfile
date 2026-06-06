@@ -30,13 +30,18 @@ WORKDIR /app
 
 # Cài dependency trước (tận dụng layer cache) — chỉ copy metadata
 COPY pyproject.toml requirements.txt ./
-# Nhóm extras cài kèm; mặc định base + demo + llm
-ARG EXTRAS=".[full]"
+# Nhóm extras cài kèm; mặc định base + demo + llm + VietOCR (tiếng Việt chất lượng cao)
+ARG EXTRAS=".[full,vietocr]"
 
-# Copy mã nguồn rồi cài ở chế độ editable
+# Copy mã nguồn rồi cài ở chế độ editable.
+# Cài torch BẢN CPU trước (tránh kéo bản CUDA ~vài GB) để VietOCR/EasyOCR dùng lại.
 COPY src ./src
 COPY configs ./configs
-RUN pip install --upgrade pip && pip install -e "${EXTRAS}"
+RUN pip install --upgrade pip \
+    && pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu \
+    && pip install -e "${EXTRAS}"
+
+# Ghi chú: lần chạy VietOCR ĐẦU TIÊN sẽ tải trọng số model về (cần mạng).
 
 # Thư mục dữ liệu/đầu ra (mount volume khi chạy)
 RUN mkdir -p data/raw data/processed data/ground_truth data/synthetic outputs logs

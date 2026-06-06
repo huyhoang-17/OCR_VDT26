@@ -25,9 +25,13 @@ preprocess:
 
 # --- [2] OCR -----------------------------------------------------------------
 ocr:
+  # rapidocr: nhẹ, chạy mọi nơi, tốt cho mã/số/ngày nhưng YẾU dấu tiếng Việt.
+  # vietocr : RapidOCR(phát hiện) + VietOCR(nhận dạng) -> GIỮ DẤU tốt; cần torch
+  #           (chạy trong Docker). Khuyến nghị cho ảnh scan tiếng Việt.
   engine: rapidocr         # rapidocr | vietocr | paddle | easyocr | tesseract
   lang: vi
   use_gpu: false
+  vietocr_model: vgg_transformer
   # Ngưỡng confidence tối thiểu để giữ 1 dòng/từ OCR (0..1)
   min_text_confidence: 0.3
 

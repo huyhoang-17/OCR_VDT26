@@ -6,6 +6,7 @@ from ..config import AppConfig
 from ..types import FieldStatus, FieldValue
 from .anchor_label import AnchorExtractor
 from .base import ExtractionContext, FieldExtractor, FieldSpec
+from .layout_fields import CheckboxExtractor, SignatureExtractor
 from .placeholders import DeferredExtractor
 from .rule_regex import RuleExtractor
 
@@ -18,10 +19,10 @@ class ExtractionOrchestrator:
         self._extractors: dict[str, FieldExtractor] = {
             "anchor": AnchorExtractor(config),
             "rule": RuleExtractor(config),
-            # Các chiến lược dưới đây sẽ hiện thực ở mốc sau (M5/M6):
-            "checkbox": DeferredExtractor("checkbox", "M5", default=list),
-            "signature": DeferredExtractor("signature", "M5", default=None),
-            "layout": DeferredExtractor("layout", "M5/M6", default=None),
+            "checkbox": CheckboxExtractor(),  # M5
+            "signature": SignatureExtractor(),  # M5
+            # Các chiến lược dưới đây sẽ hiện thực ở mốc sau:
+            "layout": DeferredExtractor("layout", "M6", default=None),
             "llm": DeferredExtractor("llm", "M6", default=None),
         }
 

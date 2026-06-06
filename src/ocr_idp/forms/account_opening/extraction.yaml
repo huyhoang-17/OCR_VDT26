@@ -87,6 +87,7 @@ fields:
     regex: 'ngay\s+\d{1,2}\s+thang\s+\d{1,2}\s+nam\s+\d{4}'
     normalizer: date
 
-  # --- Chữ ký (cần phát hiện vùng -> M5) ---
+  # --- Chữ ký (phát hiện nét mực dưới nhãn ký) ---
   - name: signature_present
     strategy: signature
+    anchor: ["Ký, ghi rõ họ tên", "Nhà đầu tư"]

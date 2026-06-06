@@ -123,3 +123,56 @@ def test_rapidocr_smoke_if_installed() -> None:
     assert len(results[0].lines) > 0
     # Token Latin nên đọc được dù tiếng Việt có thể sai dấu
     assert any(tok in text for tok in ("HOSE", "HNX", "UPCOM", "FPT", "MUA", "713"))
+
+
+# ------------------------- VietOCR (kéo lên sớm) --------------------------- #
+def test_vietocr_registered_and_unavailable_without_torch() -> None:
+    from ocr_idp.ocr.registry import available_engines
+    from ocr_idp.ocr.vietocr_engine import VietOCREngine
+
+    assert "vietocr" in available_engines()
+    # torch chưa có wheel cho host 3.14 -> không sẵn sàng -> get_engine báo lỗi rõ
+    if not VietOCREngine.is_available():
+        with pytest.raises(RuntimeError):
+            get_engine("vietocr")
+
+
+def test_vietocr_recognize_logic_with_mocks(monkeypatch) -> None:
+    """Kiểm tra logic cắt vùng + ghép kết quả của VietOCR mà KHÔNG cần torch."""
+    from ocr_idp.config import OCRConfig
+    from ocr_idp.ocr.vietocr_engine import VietOCREngine
+
+    engine = VietOCREngine(OCRConfig())
+
+    class _FakeDetector:
+        def detect(self, img):
+            return [BBox(10, 10, 120, 30), BBox(10, 40, 260, 62)]
+
+    class _FakePredictor:
+        def predict(self, pil_img, return_prob=False):
+            return ("Họ và tên", 0.97)
+
+    engine._detector = _FakeDetector()
+    monkeypatch.setattr(engine, "_get_predictor", lambda: _FakePredictor())
+
+    page = PageImage(image=np.full((100, 300, 3), 255, np.uint8), page_index=0, dpi=150)
+    res = engine.recognize(page)
+    assert res.engine == "vietocr"
+    assert len(res.lines) == 2
+    assert all(ln.text == "Họ và tên" for ln in res.lines)
+    assert all(abs(ln.confidence - 0.97) < 1e-6 for ln in res.lines)
+
+
+def test_rapidocr_detector_real_if_installed() -> None:
+    """Phần PHÁT HIỆN VÙNG của VietOCR (RapidOCR detector) chạy thật trên host."""
+    pytest.importorskip("rapidocr_onnxruntime")
+    sample = Path("data/synthetic/account_opening_individual/sample_01_scan.png")
+    if not sample.exists():
+        pytest.skip("Chưa có dữ liệu synthetic")
+
+    from ocr_idp.ocr.detection import RapidOCRDetector
+    from ocr_idp.preprocess.pdf_render import load_pages
+
+    page = load_pages(sample, target_dpi=150)[0]
+    boxes = RapidOCRDetector().detect(page.image)
+    assert len(boxes) > 5  # phát hiện được nhiều dòng

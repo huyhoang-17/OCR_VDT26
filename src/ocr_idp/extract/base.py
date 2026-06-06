@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from ..config import AppConfig
-from ..types import BBox, FieldValue, Line
+from ..types import BBox, FieldValue, Line, PageImage
 from ..normalize.text import strip_accents
 
 
@@ -41,10 +41,15 @@ class FieldSpec:
 
 @dataclass
 class ExtractionContext:
-    """Dữ liệu đầu vào cho trích xuất (gộp các dòng OCR của mọi trang)."""
+    """Dữ liệu đầu vào cho trích xuất (gộp các dòng OCR của mọi trang).
+
+    `pages` (ảnh đã tiền xử lý) cần cho các chiến lược dựa trên hình ảnh
+    (checkbox/chữ ký/bảng); các chiến lược dựa trên text thì bỏ qua.
+    """
 
     lines: list[Line]
     config: AppConfig
+    pages: Optional[list[PageImage]] = None
     _text: Optional[str] = None
     _utext: Optional[str] = None
 

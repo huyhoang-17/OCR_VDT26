@@ -45,6 +45,8 @@ class OCRConfig(BaseModel):
     lang: str = "vi"
     use_gpu: bool = False
     min_text_confidence: float = 0.3
+    # VietOCR: tên model dựng sẵn (vgg_transformer = chính xác hơn, vgg_seq2seq = nhẹ hơn)
+    vietocr_model: str = "vgg_transformer"
 
 
 class AnchorConfig(BaseModel):

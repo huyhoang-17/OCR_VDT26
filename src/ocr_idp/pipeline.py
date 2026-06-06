@@ -144,7 +144,7 @@ class Pipeline:
         plugin = get_form(form_type)
 
         t0 = time.perf_counter()
-        context = ExtractionContext(lines=all_lines, config=self.config)
+        context = ExtractionContext(lines=all_lines, config=self.config, pages=pages)
         extraction = plugin.extract(context, self.config)
         output_json = plugin.assemble(extraction)
         timings["extract_ms"] = round((time.perf_counter() - t0) * 1000, 1)
