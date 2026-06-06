@@ -38,3 +38,26 @@ def parse_date(raw: Optional[str], output_format: str = "%Y-%m-%d") -> tuple[Opt
         return date(year, month, day).strftime(output_format), []
     except ValueError:
         return None, [f"ngày không hợp lệ: '{raw}'"]
+
+
+_TIME = re.compile(r"(\d{1,2})\s*[:hg]\s*(\d{2})")
+
+
+def parse_datetime(raw: Optional[str]) -> tuple[Optional[str], list[str]]:
+    """Ngày + giờ -> ISO 8601 'YYYY-MM-DDTHH:MM'.
+
+    Chấp nhận thứ tự bất kỳ: '09:30 ngày 15/01/2025', '15/01/2025 9h30'. Nếu thiếu
+    giờ -> chỉ trả ngày; thiếu ngày -> cảnh báo.
+    """
+    if not raw or not raw.strip():
+        return None, ["thời gian trống"]
+    iso_date, date_warns = parse_date(raw)
+    if iso_date is None:
+        return None, date_warns or [f"không nhận dạng được ngày-giờ: '{raw}'"]
+    m = _TIME.search(strip_accents(raw))
+    if not m:
+        return iso_date, []  # chỉ có ngày
+    hh, mm = int(m.group(1)), int(m.group(2))
+    if not (0 <= hh <= 23 and 0 <= mm <= 59):
+        return iso_date, [f"giờ không hợp lệ trong '{raw}'"]
+    return f"{iso_date}T{hh:02d}:{mm:02d}", []

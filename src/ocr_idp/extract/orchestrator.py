@@ -9,7 +9,9 @@ from .anchor_label import AnchorExtractor
 from .base import ExtractionContext, FieldExtractor, FieldSpec
 from .layout_based import LayoutBasedExtractor
 from .layout_fields import CheckboxExtractor, SignatureExtractor
+from .radio_fields import RadioExtractor
 from .rule_regex import RuleExtractor
+from .table_extract import TableExtractor
 
 
 class _LLMFallbackExtractor(FieldExtractor):
@@ -45,6 +47,8 @@ class ExtractionOrchestrator:
             "rule": RuleExtractor(config),
             "checkbox": CheckboxExtractor(),  # M5
             "signature": SignatureExtractor(),  # M5
+            "radio": RadioExtractor(),  # M7: chọn 1 (sàn/chiều lệnh/loại lệnh/kênh)
+            "table": TableExtractor(config),  # M7: bảng -> mảng object (Form C)
             "layout": LayoutBasedExtractor(config),  # M6
             "llm": _LLMFallbackExtractor(config),  # M6: base; LLM thật ở FormPlugin
         }

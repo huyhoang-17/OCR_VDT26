@@ -171,7 +171,7 @@ pytest
 | M5 | Layout (checkbox/radio, dấu/chữ ký, nền bảng) | ✅ |
 | + | VietOCR (kéo lên sớm): RapidOCR(det)+VietOCR(rec) | ✅ |
 | M6 | Trích xuất nâng cao (layout-based + Claude LLM, fallback) | ✅ |
-| M7 | Chuẩn hóa/validate đầy đủ + Form B & C | ⏳ |
+| M7 | Chuẩn hóa/validate đầy đủ (radio/table, %/datetime/giá) + Form B & C | ✅ |
 | M8 | Các engine OCR còn lại + benchmark | ⏳ |
 | M9 | Bộ đánh giá (MD/CSV) | ⏳ |
 | M10 | Demo: API + Web + CLI | ⏳ |

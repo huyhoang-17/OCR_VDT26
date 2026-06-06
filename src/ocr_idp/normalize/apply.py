@@ -10,8 +10,8 @@ import re
 from typing import Any, Callable, Optional
 
 from ..types import FieldValue
-from .dates import parse_date
-from .numbers import parse_int, parse_money
+from .dates import parse_date, parse_datetime
+from .numbers import parse_float, parse_int, parse_money, parse_price
 from .text import clean_spaces, strip_accents
 
 
@@ -53,15 +53,38 @@ def _norm_account(raw: str) -> tuple[Any, list[str]]:
     return re.sub(r"\s", "", (raw or "")).upper(), []
 
 
+def _norm_symbol(raw: str) -> tuple[Any, list[str]]:
+    """Mã chứng khoán: bỏ khoảng trắng, viết HOA, giữ chữ/số."""
+    sym = re.sub(r"[^A-Za-z0-9]", "", (raw or "")).upper()
+    warns = [] if 2 <= len(sym) <= 10 else [f"mã CK bất thường: '{raw}'"]
+    return sym, warns
+
+
+def _norm_datetime(raw: str) -> tuple[Any, list[str]]:
+    return parse_datetime(raw)
+
+
+def _norm_percent(raw: str) -> tuple[Any, list[str]]:
+    return parse_float(raw)
+
+
+def _norm_price(raw: str) -> tuple[Any, list[str]]:
+    return parse_price(raw)
+
+
 NORMALIZERS: dict[str, Callable[[str], tuple[Any, list[str]]]] = {
     "string": _norm_string,
     "date": _norm_date,
+    "datetime": _norm_datetime,
     "int": _norm_int,
     "money": _norm_money,
+    "price": _norm_price,
+    "percent": _norm_percent,
     "phone": _norm_phone,
     "email": _norm_email,
     "id_number": _norm_id_number,
     "account_number": _norm_account,
+    "symbol": _norm_symbol,
 }
 
 

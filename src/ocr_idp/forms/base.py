@@ -38,7 +38,8 @@ def register_form(cls: type["FormPlugin"]) -> type["FormPlugin"]:
 def _ensure_loaded() -> None:
     """Import các module plugin để decorator chạy."""
     from .account_opening import plugin  # noqa: F401  (Form A — M4)
-    # Form B (order_slip) & Form C (shareholder_list) sẽ thêm ở M7.
+    from .order_slip import plugin as _b  # noqa: F401  (Form B — M7)
+    from .shareholder_list import plugin as _c  # noqa: F401  (Form C — M7)
 
 
 def list_forms() -> dict[str, str]:

@@ -1,0 +1,45 @@
+# =============================================================================
+# Cấu hình trích xuất Form C — Danh sách người sở hữu chứng khoán.
+#   strategy: anchor | table (bảng -> mảng object) | rule
+# =============================================================================
+fields:
+  - name: issuer_name
+    strategy: anchor
+    anchor: ["Tổ chức phát hành", "Tổ chức"]
+    normalizer: string
+    required: true
+
+  - name: security_symbol
+    strategy: anchor
+    anchor: ["Mã CK", "Mã chứng khoán"]
+    normalizer: symbol
+
+  - name: report_date
+    strategy: anchor
+    anchor: ["Ngày chốt danh sách", "Ngày chốt", "Ngày báo cáo"]
+    normalizer: date
+
+  # --- Bảng cổ đông -> mảng object ---
+  - name: shareholders
+    strategy: table
+    required: true
+    options:
+      key_field: full_name          # bỏ hàng thiếu họ tên (lọc dòng rác)
+      stop_keywords: ["Tổng cộng", "Tổng"]
+      columns:
+        - { field: "no", header: ["STT", "Số TT"], normalizer: int }
+        - { field: full_name, header: ["Họ và tên", "Họ tên"], normalizer: string }
+        - { field: id_number, header: ["Số CMND/CCCD", "CMND", "CCCD", "Số CMND"], normalizer: id_number }
+        - { field: shares, header: ["Số lượng CP", "Số lượng", "Số CP"], normalizer: int }
+        - { field: ratio_percent, header: ["Tỷ lệ (%)", "Tỷ lệ"], normalizer: percent }
+
+  # --- Tổng hợp (footer "Tổng cộng: ... cổ phần / ... cổ đông") ---
+  - name: total_shares
+    strategy: rule
+    regex: 'tong cong\s*:?\s*([\d.,]+)\s*co phan'
+    normalizer: int
+
+  - name: total_shareholders
+    strategy: rule
+    regex: '/\s*(\d+)\s*co dong'
+    normalizer: int
