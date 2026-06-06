@@ -57,6 +57,23 @@ class Pipeline:
         self._extractor = None  # M4/M6
 
     # --------------------------------------------------------------------- #
+    # Khởi tạo lười từng bước
+    # --------------------------------------------------------------------- #
+    def _get_preprocessor(self):
+        if self._preprocessor is None:
+            from .preprocess.pipeline_pre import Preprocessor
+
+            self._preprocessor = Preprocessor(self.config.preprocess)
+        return self._preprocessor
+
+    # --------------------------------------------------------------------- #
+    # Từng bước (có thể gọi riêng để debug/visualize)
+    # --------------------------------------------------------------------- #
+    def preprocess(self, input_path: str | Path) -> list[PageImage]:
+        """[1] Nạp + tiền xử lý file -> danh sách trang đã làm sạch."""
+        return self._get_preprocessor().process_file(input_path)
+
+    # --------------------------------------------------------------------- #
     # API công khai
     # --------------------------------------------------------------------- #
     def run(

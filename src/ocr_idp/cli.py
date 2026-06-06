@@ -15,7 +15,6 @@ Import nặng (OCR/engine) được nạp *bên trong* từng lệnh để `--he
 from __future__ import annotations
 
 import shutil
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -25,13 +24,10 @@ from rich.table import Table
 
 from . import __version__
 from .config import load_config
+from .logging_conf import _force_utf8_streams
 
 # Bảo đảm in được tiếng Việt khi stdout bị redirect/capture (tránh UnicodeError).
-for _stream in (sys.stdout, sys.stderr):
-    try:
-        _stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
-    except Exception:  # noqa: BLE001 - một số stream không hỗ trợ reconfigure
-        pass
+_force_utf8_streams()
 
 app = typer.Typer(
     name="ocr-idp",

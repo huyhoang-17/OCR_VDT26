@@ -9,11 +9,22 @@ from __future__ import annotations
 import logging
 import logging.config
 import logging.handlers
+import sys
 from pathlib import Path
 
 import yaml
 
 _CONFIGURED = False
+
+
+def _force_utf8_streams() -> None:
+    """Ép stdout/stderr dùng UTF-8 để log/in tiếng Việt không bị lỗi mã hóa
+    (đặc biệt trên Windows khi output bị redirect/capture)."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
+        except Exception:  # noqa: BLE001 - stream không hỗ trợ reconfigure
+            pass
 
 
 def setup_logging(
@@ -26,6 +37,7 @@ def setup_logging(
     if _CONFIGURED:
         return
 
+    _force_utf8_streams()
     Path(log_dir).mkdir(parents=True, exist_ok=True)
 
     cfg_file = Path(config_path)
