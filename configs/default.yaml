@@ -3,7 +3,7 @@
 # Ghi đè bằng: file YAML khác (truyền --config) hoặc biến môi trường OCRIDP_*.
 # =============================================================================
 
-# Thư mục dữ liệu gốc (raw/processed/ground_truth/synthetic/splits)
+# Thư mục dữ liệu (raw/ = PDF gốc, ground_truth/ = nhãn vàng, processed/ = artifacts)
 data_dir: data
 # Thư mục lưu artifacts trung gian để debug (ảnh tiền xử lý, OCR overlay, JSON...)
 output_dir: outputs

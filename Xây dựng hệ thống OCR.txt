@@ -16,7 +16,15 @@ Các bước thực hiện:
 Yêu cầu đầu ra:
 - Một pipeline hoàn chỉnh xử lý từ file PDF/ảnh đầu vào đến JSON đầu ra theo schema biểu mẫu được cung cấp. 
 - Hỗ trợ tối thiểu 3 loại biểu mẫu chứng khoán tiếng Việt
-- Chương trình demo dạng CLI, web app hoặc API đơn giản. Demo cần cho phép nhập tài liệu, chạy pipeline và hiển thị JSON đầu ra kèm thông tin kiểm chứng. 
+- Chương trình demo dạng CLI, web app hoặc API đơn giản. Demo cần cho phép nhập tài liệu, chạy pipeline và hiển thị JSON đầu ra kèm thông tin kiểm chứng.
+
+Hướng phát triển (mở rộng sau OCR — định hướng học viên lựa chọn):
+Trên cơ sở dữ liệu JSON đã trích xuất (coi như đã chính xác, không can thiệp thêm vào OCR), đề tài mở rộng bằng một tầng khai thác dữ liệu hướng nghiệp vụ: tự động kiểm tra tính hợp lệ về mặt nghiệp vụ và sinh biên bản tuân thủ. Mục tiêu là biến dữ liệu đã số hóa thành công cụ chủ động phát hiện sai sót, thay vì chỉ lưu trữ hoặc tra cứu thụ động.
+- Bộ luật kiểm tra nghiệp vụ (business-rule engine): kiểm tra các ràng buộc liên-trường mà mức kiểm tra từng-trường không phát hiện được, ví dụ: tính nhất quán số học (tổng vốn đã huy động ≈ tổng số lượng cổ phiếu × mệnh giá; số vốn đã huy động ≤ tổng vốn), đối soát tổng (số nhà đầu tư trong nước + nước ngoài = tổng), logic thời gian (ngày kết thúc đợt chào bán ≥ ngày cấp giấy chứng nhận; ngày báo cáo ≥ ngày kết thúc). Mọi tính toán do mã lệnh thực hiện một cách tất định để đảm bảo chính xác và tái lập; luật được khai báo theo từng loại biểu mẫu, kèm mức độ (lỗi/cảnh báo) và thông điệp.
+- Sinh biên bản tuân thủ kèm bản tóm tắt do LLM viết: từ kết quả kiểm tra, hệ thống xuất biên bản (gồm bảng kết quả đạt/vi phạm theo mức rủi ro) và một bản tóm tắt nghiệp vụ bằng tiếng Việt do LLM (Gemini/OpenAI) diễn giải. LLM chỉ đảm nhiệm diễn đạt và giải thích vi phạm, không thực hiện tính toán, và bị ràng buộc chỉ dùng dữ liệu được cung cấp để tránh bịa thông tin.
+- Đánh giá: đánh giá riêng cho tầng nghiệp vụ bằng cách chèn lỗi nghiệp vụ nhân tạo (sửa lệch số liệu, đảo thứ tự ngày…) rồi đo precision/recall/F1 của bộ luật khi phát hiện vi phạm, tách biệt khỏi phần đánh giá OCR.
+- Demo: bổ sung vào chương trình demo phần hiển thị bảng kiểm tra nghiệp vụ và chức năng sinh/tải biên bản tuân thủ (DOCX/PDF).
+Ranh giới với yêu cầu chung: việc kiểm tra trường thiếu, sai định dạng hoặc độ tin cậy thấp (mức từng-trường) thuộc pipeline lõi theo yêu cầu chung; phần mở rộng này bổ sung tầng kiểm tra ràng buộc nghiệp vụ liên-trường, sinh biên bản tuân thủ và tóm tắt bằng LLM.
 
 Tài liệu tham khảo:
 - PaddleOCR: https://github.com/PaddlePaddle/PaddleOCR 

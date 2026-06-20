@@ -13,7 +13,10 @@ ENGINE_NAME = "textlayer"
 
 def ocr_result_from_text_layer(page: PageImage) -> OCRResult:
     """Chuyển `page.text_layer` thành OCRResult (confidence = 1.0)."""
-    lines = [Line(text=tl.text, bbox=tl.bbox, confidence=1.0) for tl in (page.text_layer or [])]
+    lines = [
+        Line(text=tl.text, bbox=tl.bbox, confidence=1.0, page_index=page.page_index)
+        for tl in (page.text_layer or [])
+    ]
     lines.sort(key=lambda ln: (round(ln.bbox.y1 / 10.0), ln.bbox.x1))
     return OCRResult(
         page_index=page.page_index,

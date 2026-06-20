@@ -1,6 +1,6 @@
 """Chạy thử bước tiền xử lý 1 file và lưu ảnh kết quả để xem bằng mắt.
 
-    python scripts/preprocess_demo.py data/synthetic/order_slip/sample_01_scan.png
+    python scripts/preprocess_demo.py data/raw/form_7.pdf
     python scripts/preprocess_demo.py <file.pdf> --binarize sauvola --out outputs/pre
 """
 

@@ -1,11 +1,6 @@
-"""Test M4: trích xuất (anchor/rule/deferred), plugin Form A, end-to-end PDF."""
+"""Test trích xuất (anchor/rule/deferred) + plugin 'generic' (kết xuất theo trang)."""
 
 from __future__ import annotations
-
-import json
-from pathlib import Path
-
-import pytest
 
 from ocr_idp.config import load_config
 from ocr_idp.extract.anchor_label import AnchorExtractor
@@ -95,76 +90,24 @@ def test_orchestrator_llm_without_anchor_or_regex_is_missing() -> None:
     assert any("llm" in w.lower() for w in fv.warnings)
 
 
-# ------------------------------- Plugin ------------------------------------ #
-def test_form_plugin_registered_and_loads() -> None:
+# --------------------------- Plugin 'generic' ------------------------------ #
+def test_generic_plugin_groups_lines_by_page() -> None:
+    """Plugin generic gom dòng OCR theo page_index -> khối text từng trang."""
     from ocr_idp.forms.base import get_form, list_forms
 
-    assert "account_opening_individual" in list_forms()
-    plugin = get_form("account_opening_individual")
-    assert plugin.load_schema()["type"] == "object"
-    specs = plugin.field_specs()
-    assert any(s.name == "investor.full_name" for s in specs)
-
-
-def test_form_classify() -> None:
-    from ocr_idp.forms.base import get_form
-
-    plugin = get_form("account_opening_individual")
-    text = "giay de nghi mo tai khoan giao dich chung khoan thong tin nha dau tu"
-    assert plugin.classify(text) > 0.5
-
-
-def test_assemble_dotpath() -> None:
-    from ocr_idp.forms.base import get_form
-    from ocr_idp.types import ExtractionResult, FieldValue
-
-    plugin = get_form("account_opening_individual")
-    er = ExtractionResult(form_type="account_opening_individual")
-    er.fields["investor.full_name"] = FieldValue(name="investor.full_name", value="Nguyễn Văn A", confidence=1.0)
-    er.fields["account.account_number"] = FieldValue(name="account.account_number", value="204C1", confidence=0.9)
+    assert "generic" in list_forms()
+    plugin = get_form("generic")
+    lines = [
+        _line("trang 0 dong 1", 0, 0, 100, 12),               # page_index mặc định = 0
+        _line("trang 0 dong 2", 0, 20, 100, 32),
+        Line(text="trang 1 dong 1", bbox=BBox(0, 0, 100, 12), page_index=1),
+    ]
+    er = plugin.extract(_ctx(lines), load_config())
     out = plugin.assemble(er)
-    assert out["form_type"] == "account_opening_individual"
-    assert out["investor"]["full_name"] == "Nguyễn Văn A"
-    assert out["account"]["account_number"] == "204C1"
-    assert "_meta" in out and "confidence" in out["_meta"]
 
-
-# --------------------------- End-to-end (PDF) ------------------------------ #
-def test_end_to_end_pdf_matches_ground_truth() -> None:
-    pytest.importorskip("fitz")
-    sample = Path("data/synthetic/account_opening_individual/sample_01.pdf")
-    gt_path = Path("data/ground_truth/account_opening_individual/sample_01.json")
-    if not sample.exists() or not gt_path.exists():
-        pytest.skip("Chưa có dữ liệu synthetic (chạy: ocr-idp make-data)")
-
-    from ocr_idp.pipeline import Pipeline
-
-    gt = json.loads(gt_path.read_text(encoding="utf-8"))
-    result = Pipeline(load_config()).run(sample)  # form_type tự đoán
-
-    assert result.form_type == "account_opening_individual"
-    out = result.output_json
-    # Text-layer cho kết quả chính xác tuyệt đối -> khớp ground-truth
-    assert out["investor"]["full_name"] == gt["investor"]["full_name"]
-    assert out["investor"]["id_document"]["number"] == gt["investor"]["id_document"]["number"]
-    assert out["investor"]["email"] == gt["investor"]["email"]
-    assert out["registration_date"] == gt["registration_date"]
-    assert out["investor"]["date_of_birth"] == gt["investor"]["date_of_birth"]
-
-
-@pytest.mark.parametrize("stem", ["sample_01", "sample_02", "sample_03"])
-def test_checkbox_signature_match_gt_pdf(stem: str) -> None:
-    """M5: checkbox (account_types/services) + chữ ký khớp ground-truth trên PDF."""
-    pytest.importorskip("fitz")
-    pdf = Path(f"data/synthetic/account_opening_individual/{stem}.pdf")
-    gt_path = Path(f"data/ground_truth/account_opening_individual/{stem}.json")
-    if not pdf.exists() or not gt_path.exists():
-        pytest.skip("Chưa có dữ liệu synthetic")
-
-    from ocr_idp.pipeline import Pipeline
-
-    gt = json.loads(gt_path.read_text(encoding="utf-8"))
-    out = Pipeline(load_config()).run(pdf).output_json
-    assert sorted(out["account"]["account_types"]) == sorted(gt["account"]["account_types"])
-    assert sorted(out["account"]["services"]) == sorted(gt["account"]["services"])
-    assert out["signature_present"] == gt["signature_present"]
+    assert out["form_type"] == "generic"
+    assert out["page_count"] == 2
+    assert [p["page_index"] for p in out["pages"]] == [0, 1]
+    assert out["pages"][0]["n_lines"] == 2
+    assert out["pages"][1]["lines"] == ["trang 1 dong 1"]
+    assert "_meta" in out

@@ -129,25 +129,28 @@ def test_preprocessor_text_layer_skips_geometry() -> None:
     assert "skew_angle" not in out.preprocess_meta
 
 
-def test_load_image_file() -> None:
-    # Dùng ảnh scan synthetic nếu đã sinh (M1); nếu chưa có thì bỏ qua
-    sample = Path("data/synthetic/order_slip/sample_01_scan.png")
-    if not sample.exists():
-        pytest.skip("Chưa có dữ liệu synthetic (chạy: ocr-idp make-data)")
+def test_load_image_file(tmp_path) -> None:
+    # Tự sinh 1 ảnh PNG để test nạp ảnh (dữ liệu thật chỉ có PDF, không có ảnh rời).
+    import cv2
+    import numpy as np
+
+    p = tmp_path / "x.png"
+    cv2.imwrite(str(p), np.full((40, 120, 3), 255, np.uint8))
     from ocr_idp.preprocess.pdf_render import load_pages
 
-    pages = load_pages(sample, target_dpi=150)
+    pages = load_pages(p, target_dpi=150)
     assert len(pages) == 1 and pages[0].image.ndim == 3
 
 
-def test_render_pdf_text_layer_if_fitz() -> None:
+def test_render_real_pdf_multipage_if_fitz() -> None:
+    """PDF thật form_1.pdf: nhiều trang + có text-layer (PDF số)."""
     pytest.importorskip("fitz")
-    sample = Path("data/synthetic/account_opening_individual/sample_01.pdf")
+    sample = Path("data/raw/form_1.pdf")
     if not sample.exists():
-        pytest.skip("Chưa có dữ liệu synthetic (chạy: ocr-idp make-data)")
+        pytest.skip("Chưa có dữ liệu thật data/raw/form_1.pdf")
     from ocr_idp.preprocess.pdf_render import load_pages
 
     pages = load_pages(sample, target_dpi=150, text_layer_min_chars=20)
-    assert len(pages) >= 1
-    assert pages[0].has_text_layer  # PDF synthetic luôn có text-layer
-    assert any("TÀI KHOẢN" in ln.text.upper() for ln in pages[0].text_layer)
+    assert len(pages) >= 2  # tài liệu thật nhiều trang
+    assert all(pg.page_index == i for i, pg in enumerate(pages))  # đánh số trang đúng
+    assert pages[0].has_text_layer  # form_1 là PDF số -> có text-layer

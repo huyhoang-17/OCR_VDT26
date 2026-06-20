@@ -113,7 +113,7 @@ def test_llm_field_falls_back_to_anchor_without_key() -> None:
 def test_llm_repair_merges_into_fields(monkeypatch) -> None:
     import ocr_idp.extract.llm_claude as llm_mod
     from ocr_idp.extract.base import ExtractionContext
-    from ocr_idp.forms.base import get_form
+    from ocr_idp.forms.base import FormPlugin
 
     cfg = load_config(overrides={"extraction.llm.enabled": True})
     monkeypatch.setattr(llm_mod, "is_llm_available", lambda c: True)
@@ -127,8 +127,18 @@ def test_llm_repair_merges_into_fields(monkeypatch) -> None:
 
     monkeypatch.setattr(llm_mod, "ClaudeExtractor", _FakeExtractor)
 
-    plugin = get_form("account_opening_individual")
-    # context rỗng -> các field anchor đều "yếu" -> repair sẽ gọi LLM
+    # Plugin tạm (1 trường anchor) thay cho plugin synthetic đã gỡ — khung trích
+    # xuất theo trường + repair-merge của LLM vẫn nguyên ở FormPlugin.
+    class _TmpPlugin(FormPlugin):
+        form_type = "tmp_test"
+        title = "tmp"
+
+        def field_specs(self):  # type: ignore[override]
+            return [FieldSpec(name="investor.full_name", strategy="anchor",
+                              anchor=["Họ và tên"], normalizer="string")]
+
+    plugin = _TmpPlugin()
+    # context rỗng -> field anchor "yếu" -> repair sẽ gọi LLM
     result = plugin.extract(ExtractionContext(lines=[], config=cfg), cfg)
     fv = result.fields["investor.full_name"]
     assert fv.source == "llm"

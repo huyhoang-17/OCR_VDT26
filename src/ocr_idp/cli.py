@@ -4,10 +4,8 @@ Lệnh:
     ocr-idp version          # phiên bản
     ocr-idp info             # kiểm tra môi trường (Tesseract/poppler) + cấu hình
     ocr-idp forms            # liệt kê các plugin biểu mẫu đã đăng ký
-    ocr-idp make-data        # sinh dữ liệu giả lập + ground-truth
     ocr-idp process <file>   # chạy pipeline 1 file -> JSON
     ocr-idp batch <dir>      # chạy hàng loạt cả thư mục
-    ocr-idp benchmark        # so sánh engine OCR -> MD/CSV
     ocr-idp evaluate         # đánh giá so ground-truth -> MD/CSV
     ocr-idp serve-api        # chạy REST API (FastAPI)
     ocr-idp serve-web        # chạy web demo (Streamlit)
@@ -264,89 +262,11 @@ def serve_web(
                     "--server.port", str(port)], check=False)
 
 
-@app.command(name="make-data")
-def make_data(
-    out_dir: Optional[Path] = typer.Option(None, "--out", help="Thư mục lưu dữ liệu (mặc định: data_dir)."),
-    samples: int = typer.Option(3, "--samples", "-n", help="Số mẫu mỗi loại biểu mẫu."),
-    seed: int = typer.Option(42, "--seed", help="Seed ngẫu nhiên (tái lập)."),
-    dpi: int = typer.Option(150, "--dpi", help="DPI của ảnh scan giả."),
-    no_scan: bool = typer.Option(False, "--no-scan", help="Chỉ sinh PDF, bỏ ảnh scan."),
-    config: Optional[Path] = typer.Option(None, "--config", "-c", help="File cấu hình YAML."),
-) -> None:
-    """Sinh dữ liệu biểu mẫu giả lập (PDF + ảnh scan) + ground-truth + chia tập."""
-    cfg = load_config(config)
-    out = str(out_dir) if out_dir else cfg.data_dir
-    try:
-        from .synthetic.generator import generate_all
-
-        summary = generate_all(out_root=out, samples=samples, seed=seed, dpi=dpi, make_scan=not no_scan)
-    except ImportError as exc:  # thiếu reportlab/Pillow/opencv
-        console.print(
-            f"[red]Thiếu thư viện để sinh dữ liệu:[/red] {exc}\n"
-            "Cài: [cyan]pip install reportlab pillow opencv-python-headless numpy[/cyan]"
-        )
-        raise typer.Exit(code=1)
-    except RuntimeError as exc:  # thiếu font
-        console.print(f"[red]{exc}[/red]")
-        raise typer.Exit(code=1)
-
-    table = Table(title="Đã sinh dữ liệu giả lập", show_header=True, header_style="bold")
-    table.add_column("Loại biểu mẫu")
-    table.add_column("Số mẫu", justify="right")
-    for ftype, count in summary["forms"].items():
-        table.add_row(ftype, str(count))
-    console.print(table)
-    console.print(
-        f"Tổng [bold]{summary['files_written']}[/bold] file vào [cyan]{summary['out_root']}/synthetic[/cyan] "
-        f"(ground-truth ở [cyan]{summary['out_root']}/ground_truth[/cyan], chia tập ở "
-        f"[cyan]{summary['out_root']}/splits[/cyan]). Font: {summary['font']}"
-    )
-
-
-@app.command()
-def benchmark(
-    engines: Optional[str] = typer.Option(None, "--engines", "-e", help="DS engine (phẩy). Mặc định: tất cả đã đăng ký."),
-    limit: Optional[int] = typer.Option(None, "--limit", "-n", help="Giới hạn số ảnh scan."),
-    data_root: Path = typer.Option(Path("data"), "--data", help="Thư mục data (chứa synthetic/)."),
-    out_dir: Path = typer.Option(Path("outputs"), "--out", help="Thư mục ghi báo cáo."),
-    config: Optional[Path] = typer.Option(None, "--config", "-c"),
-) -> None:
-    """So sánh các engine OCR (thời gian + chất lượng) trên ảnh scan -> MD/CSV + đề xuất engine."""
-    from .eval.benchmark import benchmark_engines, recommend_default, write_reports
-
-    cfg = load_config(config)
-    names = [e.strip() for e in engines.split(",")] if engines else None
-    with console.status("[cyan]Đang chạy benchmark engine OCR...[/cyan]"):
-        result = benchmark_engines(engine_names=names, config=cfg, data_root=str(data_root), limit=limit)
-
-    if result["n_samples"] == 0:
-        console.print("[yellow]Không tìm thấy ảnh scan nào trong data/synthetic. Chạy: ocr-idp make-data[/yellow]")
-        raise typer.Exit(code=0)
-
-    table = Table(title=f"Benchmark engine OCR ({result['n_samples']} ảnh)", header_style="bold")
-    for col in ("Engine", "Sẵn sàng", "TG TB(ms)", "#dòng", "Sim bỏ dấu", "Sim có dấu", "Ghi chú"):
-        table.add_column(col)
-    from .eval.benchmark import _sorted_stats
-
-    for s in _sorted_stats(result["stats"]):
-        table.add_row(
-            s.engine, "[green]OK[/green]" if s.available else "[yellow]—[/yellow]",
-            str(s.avg_ms), str(s.avg_lines), str(s.sim_unaccented), str(s.sim_accented), s.note,
-        )
-    console.print(table)
-
-    paths = write_reports(result, out_dir=out_dir)
-    rec = recommend_default(result)
-    if rec:
-        console.print(f"[green]Đề xuất engine mặc định:[/green] [bold]{rec}[/bold]")
-    console.print(f"Đã ghi báo cáo: [cyan]{paths['markdown']}[/cyan], [cyan]{paths['csv']}[/cyan]")
-
-
 @app.command()
 def evaluate(
-    kind: str = typer.Option("pdf", "--kind", "-k", help="Đầu vào đánh giá: pdf (text-layer) | scan (ảnh OCR)."),
-    form: Optional[str] = typer.Option(None, "--form", "-f", help="Chỉ đánh giá 1 form_type (mặc định: tất cả)."),
-    data_root: Path = typer.Option(Path("data"), "--data", help="Thư mục data (ground_truth/ + synthetic/)."),
+    kind: str = typer.Option("pdf", "--kind", "-k", help="pdf (dùng text-layer nếu có) | scan (ép OCR mọi trang)."),
+    form: Optional[str] = typer.Option(None, "--form", "-f", help="Chỉ đánh giá 1 form_type, vd eform7 (mặc định: tất cả)."),
+    data_root: Path = typer.Option(Path("data"), "--data", help="Thư mục data (raw/ + ground_truth/)."),
     out_dir: Path = typer.Option(Path("outputs"), "--out", help="Thư mục ghi báo cáo."),
     config: Optional[Path] = typer.Option(None, "--config", "-c"),
 ) -> None:
@@ -359,7 +279,9 @@ def evaluate(
         report = evaluate_dataset(config=cfg, kind=kind, forms=forms, data_root=str(data_root))
 
     if not report.samples:
-        console.print("[yellow]Không tìm thấy cặp (ground-truth, input). Chạy: ocr-idp make-data[/yellow]")
+        console.print(
+            "[yellow]Không tìm thấy cặp (raw/form_N.pdf ↔ ground_truth/expect_N.json).[/yellow]"
+        )
         raise typer.Exit(code=0)
 
     o = report.overall

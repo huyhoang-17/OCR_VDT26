@@ -110,19 +110,18 @@ def test_overlay_draws_without_error() -> None:
 def test_rapidocr_smoke_if_installed() -> None:
     pytest.importorskip("rapidocr_onnxruntime")
     pytest.importorskip("onnxruntime")
-    sample = Path("data/synthetic/order_slip/sample_01_scan.png")
+    sample = Path("data/raw/form_7.pdf")  # PDF thật dạng scan -> phải OCR
     if not sample.exists():
-        pytest.skip("Chưa có dữ liệu synthetic (chạy: ocr-idp make-data)")
+        pytest.skip("Chưa có dữ liệu thật data/raw/form_7.pdf")
 
     from ocr_idp.pipeline import Pipeline
 
     pipe = Pipeline(load_config())
     pages = pipe.preprocess(sample)
-    results = pipe.ocr(pages, use_text_layer=False)
-    text = results[0].text.upper()
-    assert len(results[0].lines) > 0
-    # Token Latin nên đọc được dù tiếng Việt có thể sai dấu
-    assert any(tok in text for tok in ("HOSE", "HNX", "UPCOM", "FPT", "MUA", "713"))
+    results = pipe.ocr(pages, use_text_layer=False)  # ép OCR mọi trang
+    # OCR đọc được chữ trên trang scan + gắn đúng số trang vào từng dòng
+    assert sum(len(r.lines) for r in results) > 0
+    assert all(ln.page_index == r.page_index for r in results for ln in r.lines)
 
 
 # ------------------------- VietOCR (kéo lên sớm) --------------------------- #
@@ -166,13 +165,13 @@ def test_vietocr_recognize_logic_with_mocks(monkeypatch) -> None:
 def test_rapidocr_detector_real_if_installed() -> None:
     """Phần PHÁT HIỆN VÙNG của VietOCR (RapidOCR detector) chạy thật trên host."""
     pytest.importorskip("rapidocr_onnxruntime")
-    sample = Path("data/synthetic/account_opening_individual/sample_01_scan.png")
+    sample = Path("data/raw/form_7.pdf")
     if not sample.exists():
-        pytest.skip("Chưa có dữ liệu synthetic")
+        pytest.skip("Chưa có dữ liệu thật data/raw/form_7.pdf")
 
     from ocr_idp.ocr.detection import RapidOCRDetector
     from ocr_idp.preprocess.pdf_render import load_pages
 
     page = load_pages(sample, target_dpi=150)[0]
     boxes = RapidOCRDetector().detect(page.image)
-    assert len(boxes) > 5  # phát hiện được nhiều dòng
+    assert len(boxes) > 5  # trang biểu mẫu có nhiều dòng -> phát hiện được nhiều vùng

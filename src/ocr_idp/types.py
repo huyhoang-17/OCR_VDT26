@@ -83,12 +83,19 @@ class Word:
 
 @dataclass
 class Line:
-    """Một dòng text OCR (đơn vị cơ bản mà phần lớn engine trả về)."""
+    """Một dòng text OCR (đơn vị cơ bản mà phần lớn engine trả về).
+
+    `page_index` cho biết dòng thuộc trang nào (0-based). Khi pipeline gộp dòng
+    của NHIỀU trang vào một danh sách, trường này giúp các bước trích xuất theo
+    hình học chỉ so khớp trong CÙNG một trang (tránh ghép nhầm nhãn trang này với
+    giá trị trang khác do tọa độ pixel các trang chồng nhau).
+    """
 
     text: str
     bbox: BBox
     confidence: float = 1.0
     words: list[Word] = field(default_factory=list)
+    page_index: int = 0
 
 
 @dataclass

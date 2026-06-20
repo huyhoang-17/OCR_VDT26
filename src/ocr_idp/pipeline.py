@@ -40,7 +40,7 @@ class Pipeline:
 
     Cách dùng:
         pipe = Pipeline(load_config())
-        result = pipe.run("form.pdf", form_type="account_opening_individual")
+        result = pipe.run("form.pdf")  # form_type=None -> tự đoán, fallback 'generic'
         print(result.output_json)
     """
 
@@ -85,9 +85,14 @@ class Pipeline:
         results: list[OCRResult] = []
         for page in pages:
             if use_text_layer and page.has_text_layer:
-                results.append(ocr_result_from_text_layer(page))
+                res = ocr_result_from_text_layer(page)
             else:
-                results.append(self._get_ocr_engine().recognize(page))
+                res = self._get_ocr_engine().recognize(page)
+            # Đảm bảo mọi dòng mang đúng số trang (engine có thể không tự gắn) —
+            # cần cho trích xuất hình học khi gộp dòng của PDF nhiều trang.
+            for ln in res.lines:
+                ln.page_index = page.page_index
+            results.append(res)
         return results
 
     # --------------------------------------------------------------------- #
@@ -109,7 +114,7 @@ class Pipeline:
         import time
 
         from .extract.base import ExtractionContext
-        from .forms.base import detect_form, get_form, list_forms
+        from .forms.base import detect_form, get_form
         from .normalize.text import strip_accents
 
         timings: dict[str, float] = {}
@@ -124,16 +129,17 @@ class Pipeline:
 
         all_lines = [ln for res in ocr_results for ln in res.lines]
 
-        # Xác định loại biểu mẫu (nếu chưa chỉ định)
+        # Xác định loại biểu mẫu (nếu chưa chỉ định). Không nhận ra biểu mẫu cụ
+        # thể nào -> dùng plugin 'generic' (kết xuất OCR theo trang) để pipeline
+        # vẫn chạy được trên dữ liệu thật.
         if form_type is None:
             utext = strip_accents("\n".join(ln.text for ln in all_lines)).lower()
             form_type = detect_form(utext)
             if form_type is None:
-                raise ValueError(
-                    "Không tự xác định được loại biểu mẫu. Hãy truyền form_type "
-                    f"(các loại hỗ trợ: {list(list_forms())})."
-                )
-            logger.info("Tự nhận diện biểu mẫu: %s", form_type)
+                form_type = "generic"
+                logger.info("Không nhận diện được biểu mẫu cụ thể -> dùng plugin 'generic'.")
+            else:
+                logger.info("Tự nhận diện biểu mẫu: %s", form_type)
 
         plugin = get_form(form_type)
 

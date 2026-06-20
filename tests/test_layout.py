@@ -63,11 +63,15 @@ def test_detect_table_cells_synthetic() -> None:
     assert has_table(img)
 
 
-def test_detect_table_on_shareholder_scan() -> None:
-    sample = Path("data/synthetic/shareholder_list/sample_01_scan.png")
+def test_detect_table_on_real_pdf_scan() -> None:
+    """has_table trên trang PDF thật (form_94 — tài liệu nhiều trang dạng scan)."""
+    pytest.importorskip("fitz")
+    sample = Path("data/raw/form_94.pdf")
     if not sample.exists():
-        pytest.skip("Chưa có dữ liệu synthetic")
-    from ocr_idp.preprocess.base import read_image_file
+        pytest.skip("Chưa có dữ liệu thật data/raw/form_94.pdf")
+    from ocr_idp.preprocess.pdf_render import load_pages
 
-    img = read_image_file(sample)
-    assert has_table(img)  # Form C có bảng
+    # Chỉ kiểm has_table chạy được & trả bool trên ảnh thật (không ép có bảng,
+    # vì không phải trang nào cũng có lưới kẻ).
+    pages = load_pages(sample, target_dpi=150)
+    assert isinstance(has_table(pages[0].image), bool)

@@ -115,20 +115,26 @@ class EvalReport:
     overall: FormAgg
 
 
-def _discover(data_root: str | Path, kind: str, forms: Optional[list[str]]) -> list[tuple[str, str, Path]]:
-    """Trả về (form_type, stem, input_path) cho mỗi ground-truth có input tương ứng."""
+def _discover(
+    data_root: str | Path, kind: str, forms: Optional[list[str]]
+) -> list[tuple[str, str, Path, Path]]:
+    """Trả về (form_type, stem, input_pdf, gt_path) cho mỗi cặp dữ liệu thật.
+
+    Layout dữ liệu thật: `ground_truth/expect_<N>.json` ghép với `raw/form_<N>.pdf`
+    theo số N. form_type = 'eform<N>' (lấy từ tên file). `kind` chỉ là nhãn báo cáo
+    (chọn đường text-layer hay ép OCR được xử lý ở `evaluate_dataset`).
+    """
     gt_root = Path(data_root) / "ground_truth"
-    syn_root = Path(data_root) / "synthetic"
-    suffix = "_scan.png" if kind == "scan" else ".pdf"
-    items: list[tuple[str, str, Path]] = []
-    for gt_dir in sorted(gt_root.glob("*")):
-        if not gt_dir.is_dir() or (forms and gt_dir.name not in forms):
+    raw_root = Path(data_root) / "raw"
+    items: list[tuple[str, str, Path, Path]] = []
+    for gt_file in sorted(gt_root.glob("expect_*.json")):
+        n = gt_file.stem.split("expect_", 1)[-1]  # "expect_7" -> "7"
+        form_type = f"eform{n}"
+        if forms and form_type not in forms:
             continue
-        for gt_file in sorted(gt_dir.glob("*.json")):
-            stem = gt_file.stem
-            inp = syn_root / gt_dir.name / f"{stem}{suffix}"
-            if inp.exists():
-                items.append((gt_dir.name, stem, inp))
+        pdf = raw_root / f"form_{n}.pdf"
+        if pdf.exists():
+            items.append((form_type, f"form_{n}", pdf, gt_file))
     return items
 
 
@@ -143,14 +149,17 @@ def evaluate_dataset(
 
     pipe = Pipeline(config)
     items = _discover(data_root, kind, forms)
+    # kind='scan' -> ép OCR mọi trang (kể cả PDF số có text-layer) để đo chất lượng OCR.
+    use_text_layer = kind != "scan"
 
     samples: list[SampleResult] = []
-    for form_type, stem, inp in items:
-        gt = json.loads((Path(data_root) / "ground_truth" / form_type / f"{stem}.json").read_text(encoding="utf-8"))
+    for form_type, stem, inp, gt_path in items:
+        gt = json.loads(gt_path.read_text(encoding="utf-8"))
         try:
-            res = pipe.run(inp, form_type=form_type)
+            # form_type=None -> pipeline fallback 'generic' (chưa có extractor eform).
+            res = pipe.run(inp, use_text_layer=use_text_layer)
             outcomes = compare_documents(res.output_json, gt)
-            form_exact = all(o.exact for o in outcomes)
+            form_exact = bool(outcomes) and all(o.exact for o in outcomes)
             samples.append(SampleResult(form_type, stem, str(inp), outcomes, form_exact, dict(res.timings_ms)))
         except Exception as exc:  # noqa: BLE001
             logger.warning("Lỗi đánh giá %s: %s", inp, exc)

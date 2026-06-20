@@ -1,7 +1,7 @@
 """Chạy thử OCR 1 file: tiền xử lý -> OCR -> lưu ảnh overlay bbox + in text.
 
-    python scripts/ocr_demo.py data/synthetic/account_opening_individual/sample_01.pdf
-    python scripts/ocr_demo.py data/synthetic/order_slip/sample_01_scan.png --engine rapidocr
+    python scripts/ocr_demo.py data/raw/form_1.pdf
+    python scripts/ocr_demo.py data/raw/form_7.pdf --engine rapidocr
 """
 
 from __future__ import annotations

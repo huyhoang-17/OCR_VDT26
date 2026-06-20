@@ -1,8 +1,10 @@
 """Đánh giá pipeline so với ground-truth -> in tóm tắt + ghi MD/CSV.
 
-    python scripts/run_eval.py                 # đánh giá PDF (text-layer) tất cả form
-    python scripts/run_eval.py --kind scan     # đánh giá ảnh scan (đường OCR)
-    python scripts/run_eval.py --form order_slip
+Ghép raw/form_N.pdf ↔ ground_truth/expect_N.json theo N (form_type = eformN).
+
+    python scripts/run_eval.py                 # dùng text-layer nếu có, tất cả form
+    python scripts/run_eval.py --kind scan     # ép OCR mọi trang (đo chất lượng OCR)
+    python scripts/run_eval.py --form eform7
 """
 
 from __future__ import annotations
@@ -29,7 +31,7 @@ def main() -> None:
     forms = [args.form] if args.form else None
     report = evaluate_dataset(config=load_config(args.config), kind=args.kind, forms=forms, data_root=args.data)
     if not report.samples:
-        print("Không có cặp (ground-truth, input). Chạy 'ocr-idp make-data' trước.")
+        print("Không có cặp (raw/form_N.pdf ↔ ground_truth/expect_N.json).")
         return
     print(to_markdown(report))
     paths = write_reports(report, out_dir=args.out)

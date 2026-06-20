@@ -87,11 +87,12 @@ def vertical_overlap_ratio(a: BBox, b: BBox) -> float:
 
 
 def find_value_right(lines: list[Line], anchor: Line, min_overlap: float = 0.4) -> Optional[Line]:
-    """Dòng giá trị nằm CÙNG HÀNG và bên PHẢI nhãn (gần nhất)."""
+    """Dòng giá trị nằm CÙNG HÀNG và bên PHẢI nhãn (gần nhất), CÙNG TRANG."""
     ab = anchor.bbox
     candidates = [
         ln for ln in lines
         if ln is not anchor
+        and ln.page_index == anchor.page_index
         and vertical_overlap_ratio(ln.bbox, ab) >= min_overlap
         and ln.bbox.x1 >= ab.x2 - 0.5 * ab.height
     ]
@@ -101,11 +102,11 @@ def find_value_right(lines: list[Line], anchor: Line, min_overlap: float = 0.4) 
 
 
 def find_value_below(lines: list[Line], anchor: Line, max_gap_ratio: float = 2.5) -> Optional[Line]:
-    """Dòng giá trị nằm NGAY DƯỚI nhãn (gần & cùng cột trái)."""
+    """Dòng giá trị nằm NGAY DƯỚI nhãn (gần & cùng cột trái), CÙNG TRANG."""
     ab = anchor.bbox
     candidates = []
     for ln in lines:
-        if ln is anchor:
+        if ln is anchor or ln.page_index != anchor.page_index:
             continue
         gap = ln.bbox.y1 - ab.y2
         if gap < -0.2 * ab.height:  # phải nằm dưới

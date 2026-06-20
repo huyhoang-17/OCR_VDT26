@@ -81,35 +81,44 @@ def test_compare_documents_perfect_match() -> None:
     assert all(o.exact for o in outcomes) and len(outcomes) == 2  # a, b.c (bỏ _meta/form_type)
 
 
-# ----------------------------- end-to-end PDF ----------------------------- #
-def test_evaluate_dataset_pdf_high_accuracy() -> None:
+# ----------------------- discovery + e2e dữ liệu thật ---------------------- #
+def test_discover_pairs_real_data_by_n() -> None:
+    """_discover ghép raw/form_N.pdf ↔ ground_truth/expect_N.json theo N -> eformN."""
+    from pathlib import Path
+
+    from ocr_idp.eval.report import _discover
+
+    if not list(Path("data/ground_truth").glob("expect_*.json")):
+        pytest.skip("Chưa có dữ liệu thật trong data/ground_truth")
+
+    items = _discover("data", "pdf", None)
+    assert items, "không tìm thấy cặp nào"
+    for form_type, stem, pdf, gt in items:
+        assert form_type.startswith("eform")
+        assert pdf.exists() and pdf.suffix == ".pdf"
+        assert gt.exists() and gt.name.startswith("expect_")
+    # lọc theo 1 form_type
+    one = _discover("data", "pdf", ["eform1"])
+    assert all(ft == "eform1" for ft, *_ in one)
+
+
+def test_evaluate_single_real_form_runs() -> None:
+    """E2E: chạy eval trên 1 form có text-layer (eform1) -> harness chạy, report render.
+
+    Chưa có extractor eform nên output 'generic' KHÔNG khớp schema -> đây là baseline.
+    """
     pytest.importorskip("fitz")
     from pathlib import Path
 
-    if not Path("data/ground_truth").exists():
-        pytest.skip("Chưa có ground-truth (chạy: ocr-idp make-data)")
+    if not (Path("data/ground_truth/expect_1.json").exists() and Path("data/raw/form_1.pdf").exists()):
+        pytest.skip("Chưa có cặp eform1 (form_1.pdf + expect_1.json)")
 
     from ocr_idp.eval.report import evaluate_dataset, to_csv, to_markdown
 
-    report = evaluate_dataset(config=load_config(), kind="pdf")
-    assert report.overall.n_samples >= 3
-    # Text-layer là fast path chính xác -> accuracy trường rất cao
-    assert report.overall.field_accuracy >= 0.95
-    assert report.overall.form_exact_rate >= 0.5
-    # report render được
+    report = evaluate_dataset(config=load_config(), kind="pdf", forms=["eform1"])
+    assert report.overall.n_samples == 1
+    assert set(report.form_aggs) == {"eform1"}
+    # Harness tổng hợp + render được (giá trị accuracy là baseline, không cần ngưỡng)
     assert "Đánh giá so ground-truth" in to_markdown(report)
     assert to_csv(report).splitlines()[0].startswith("field,")
-
-
-def test_evaluate_single_form() -> None:
-    pytest.importorskip("fitz")
-    from pathlib import Path
-
-    if not Path("data/ground_truth/order_slip").exists():
-        pytest.skip("Chưa có ground-truth")
-
-    from ocr_idp.eval.report import evaluate_dataset
-
-    report = evaluate_dataset(config=load_config(), kind="pdf", forms=["order_slip"])
-    assert set(report.form_aggs) == {"order_slip"}
-    assert report.overall.field_accuracy >= 0.95
+    assert 0.0 <= report.overall.field_accuracy <= 1.0
