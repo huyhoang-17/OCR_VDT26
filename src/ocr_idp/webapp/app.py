@@ -61,17 +61,25 @@ def main() -> None:
         st.info("Hãy tải lên một file để bắt đầu.")
         return
 
-    if not st.button("Chạy trích xuất", type="primary"):
-        return
+    if st.button("Chạy trích xuất", type="primary"):
+        form_type = None if form_choice == _AUTO else form_choice
+        suffix = Path(uploaded.name).suffix or ".bin"
+        with st.spinner("Đang xử lý..."):
+            try:
+                result = _run(uploaded.getvalue(), suffix, form_type, engine, use_text_layer)
+            except Exception as exc:  # noqa: BLE001
+                st.session_state.pop("result", None)
+                st.error(f"Lỗi: {exc}")
+                return
+        # Lưu kết quả để các lần rerun sau (vd kéo thanh chọn trang) vẫn hiển thị.
+        st.session_state["result"] = result
+        st.session_state["result_name"] = uploaded.name
 
-    form_type = None if form_choice == _AUTO else form_choice
-    suffix = Path(uploaded.name).suffix or ".bin"
-    with st.spinner("Đang xử lý..."):
-        try:
-            result = _run(uploaded.getvalue(), suffix, form_type, engine, use_text_layer)
-        except Exception as exc:  # noqa: BLE001
-            st.error(f"Lỗi: {exc}")
-            return
+    result = st.session_state.get("result")
+    if result is None:
+        st.info("Bấm **Chạy trích xuất** để xử lý file.")
+        return
+    src_name = st.session_state.get("result_name", uploaded.name)
 
     meta = result.output_json.get("_meta", {})
     warnings = meta.get("warnings", [])
@@ -83,20 +91,28 @@ def main() -> None:
     left, right = st.columns(2)
     with left:
         st.subheader("Ảnh & overlay OCR")
-        if result.pages:
-            page = result.pages[0]
-            if show_overlay and result.ocr_results:
-                st.image(draw_ocr_overlay(page.image, result.ocr_results[0]),
-                         channels="BGR", caption="Overlay bbox OCR (trang 1)")
+        n_pages = len(result.pages)
+        if n_pages:
+            # Tài liệu nhiều trang -> cho chọn trang để xem (mặc định trang 1).
+            pidx = (st.slider("Trang", 1, n_pages, 1) - 1) if n_pages > 1 else 0
+            page = result.pages[pidx]
+            ocr = result.ocr_results[pidx] if pidx < len(result.ocr_results) else None
+            cap_suffix = f"trang {pidx + 1}/{n_pages}"
+            if show_overlay and ocr is not None:
+                st.image(draw_ocr_overlay(page.image, ocr),
+                         channels="BGR", caption=f"Overlay bbox OCR ({cap_suffix})")
             else:
-                st.image(page.image, caption="Ảnh đã tiền xử lý (trang 1)")
+                st.image(page.image, caption=f"Ảnh đã tiền xử lý ({cap_suffix})")
+            if ocr is not None:
+                with st.expander(f"Text OCR {cap_suffix} ({len(ocr.lines)} dòng)"):
+                    st.text("\n".join(ln.text for ln in ocr.lines) or "(không có dòng nào)")
         st.caption(f"Thời gian (ms): {result.timings_ms}")
     with right:
         st.subheader("JSON kết quả")
         st.json(result.output_json)
         st.download_button(
             "Tải JSON", json.dumps(result.output_json, ensure_ascii=False, indent=2),
-            file_name=f"{Path(uploaded.name).stem}.json", mime="application/json",
+            file_name=f"{Path(src_name).stem}.json", mime="application/json",
         )
 
     st.subheader("Cảnh báo cần kiểm tra")

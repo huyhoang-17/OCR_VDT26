@@ -103,6 +103,11 @@ Copy-Item .env.example .env
 docker compose -f docker/docker-compose.yml up --build
 ```
 
+```powershell
+# Hủy chạy docker
+docker compose -f docker/docker-compose.yml down
+```
+
 - REST API docs: http://localhost:8000/docs
 - Web demo: http://localhost:8501
 

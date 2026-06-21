@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OCR-IDP — Trình bày đồ án</title>
+<style>
+  :root{
+    --ground:#0B1117;
+    --surface:#131D27;
+    --surface-2:#0F1922;
+    --line:rgba(120,150,175,.16);
+    --line-strong:rgba(120,150,175,.30);
+    --text:#DCE6F0;
+    --muted:#7C93A8;
+    --accent:#38BDF8;      /* cyan scan-line */
+    --accent-dim:rgba(56,189,248,.14);
+    --ok:#34D399;          /* emerald — status: done */
+    --wip:#F5A623;         /* amber — status: in progress */
+    --mono:"Cascadia Code","JetBrains Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --pad:clamp(28px,5vw,84px);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:clamp(15px,1.05vw,17px);
+    line-height:1.5;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* faint scan-bed grid */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(120,150,175,.045) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(120,150,175,.045) 1px,transparent 1px);
+    background-size:46px 46px;
+    mask-image:radial-gradient(ellipse 95% 85% at 50% 45%,#000 55%,transparent 100%);
+  }
+
+  /* ---------- deck / slides ---------- */
+  .deck{position:relative;z-index:1;height:100vh;width:100vw;}
+  .slide{
+    position:absolute;inset:0;
+    display:none;
+    flex-direction:column;
+    justify-content:center;
+    padding:var(--pad);
+    padding-top:clamp(54px,7vh,96px);
+    padding-bottom:clamp(54px,7vh,90px);
+  }
+  .slide.active{display:flex;}
+  .inner{width:100%;max-width:1180px;margin:0 auto;}
+
+  /* eyebrow + title */
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:.78rem;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0 0 18px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .eyebrow .num{color:var(--muted);}
+  .eyebrow::after{content:"";flex:0 0 46px;height:1px;background:var(--accent);opacity:.55;}
+
+  h2.title{
+    font-size:clamp(1.9rem,4vw,3rem);
+    line-height:1.05;
+    font-weight:700;
+    letter-spacing:-.02em;
+    margin:0 0 6px;
+  }
+  .rule{width:54px;height:3px;background:var(--accent);margin:18px 0 26px;border-radius:2px;}
+  .lead{color:var(--muted);max-width:62ch;margin:0 0 18px;font-size:1.05rem;}
+
+  /* ---------- bullet lists ---------- */
+  ul.bul{list-style:none;margin:0;padding:0;display:grid;gap:14px;}
+  ul.bul li{position:relative;padding-left:30px;}
+  ul.bul li::before{
+    content:"";position:absolute;left:0;top:.5em;
+    width:9px;height:9px;border:1.5px solid var(--accent);border-radius:1px;
+    transform:rotate(45deg);
+  }
+  ul.bul li b{color:#fff;font-weight:600;}
+  ul.bul li .k{font-family:var(--mono);color:var(--accent);font-size:.92em;}
+
+  /* ---------- generic surfaces ---------- */
+  .card{
+    background:linear-gradient(180deg,var(--surface),var(--surface-2));
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:18px 20px;
+  }
+  .grid{display:grid;gap:16px;}
+  .g2{grid-template-columns:repeat(2,1fr);}
+  .g3{grid-template-columns:repeat(3,1fr);}
+  .g4{grid-template-columns:repeat(4,1fr);}
+  @media (max-width:880px){.g2,.g3,.g4{grid-template-columns:1fr 1fr;}}
+  @media (max-width:560px){.g2,.g3,.g4{grid-template-columns:1fr;}}
+
+  .feat h4{margin:0 0 6px;font-size:1rem;}
+  .feat p{margin:0;color:var(--muted);font-size:.92rem;line-height:1.45;}
+  .feat .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;display:block;margin-bottom:8px;}
+
+  code,.mono{font-family:var(--mono);}
+  pre.code{
+    font-family:var(--mono);
+    background:#070C11;
+    border:1px solid var(--line);
+    border-left:3px solid var(--accent);
+    border-radius:6px;
+    padding:16px 18px;
+    overflow:auto;
+    font-size:.85rem;
+    line-height:1.55;
+    color:#c9d6e3;
+    margin:0;
+  }
+  pre.code .c{color:var(--accent);}
+  pre.code .m{color:var(--muted);}
+
+  /* ---------- pipeline diagram ---------- */
+  .pipe{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;}
+  .pchip{
+    font-family:var(--mono);font-size:.82rem;letter-spacing:.04em;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:14px 12px;border:1px dashed var(--line-strong);border-radius:6px;
+    color:var(--muted);min-width:104px;
+  }
+  .pstep{
+    flex:1 1 130px;min-width:120px;
+    background:linear-gradient(180deg,var(--surface),var(--surface-2));
+    border:1px solid var(--line);border-top:2px solid var(--accent);
+    border-radius:6px;padding:14px 12px;text-align:center;
+  }
+  .pstep .n{font-family:var(--mono);color:var(--accent);font-size:.78rem;}
+  .pstep .t{display:block;margin-top:6px;font-weight:600;font-size:.95rem;}
+  .arrow{align-self:center;color:var(--accent);font-family:var(--mono);padding:0 6px;font-size:1.1rem;}
+  @media (max-width:760px){.arrow{transform:rotate(90deg);width:100%;text-align:center;padding:4px 0;}}
+
+  /* ---------- table ---------- */
+  table.tbl{width:100%;border-collapse:collapse;font-size:.92rem;}
+  table.tbl th,table.tbl td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);}
+  table.tbl thead th{
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--accent);border-bottom:1px solid var(--line-strong);
+  }
+  table.tbl td.mono,table.tbl td.r{font-family:var(--mono);}
+  table.tbl td.r{text-align:right;}
+  .pill{font-family:var(--mono);font-size:.72rem;padding:2px 8px;border-radius:20px;border:1px solid var(--line-strong);}
+  .pill.pdf{color:var(--ok);border-color:rgba(52,211,153,.4);}
+  .pill.scan{color:var(--accent);border-color:rgba(56,189,248,.4);}
+
+  /* ---------- stat chips ---------- */
+  .chips{display:flex;gap:14px;flex-wrap:wrap;margin-top:26px;}
+  .chip{
+    font-family:var(--mono);font-size:.85rem;
+    border:1px solid var(--line);border-radius:6px;
+    padding:10px 14px;background:var(--surface-2);
+    display:flex;gap:8px;align-items:baseline;
+  }
+  .chip b{color:var(--accent);font-size:1.15rem;}
+
+  /* ---------- bar chart ---------- */
+  .chart{display:flex;align-items:flex-end;gap:42px;height:230px;padding:0 8px 0 4px;border-bottom:1px solid var(--line-strong);}
+  .bar-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:0 0 130px;height:100%;}
+  .bar{
+    width:104px;height:0;border-radius:5px 5px 0 0;
+    background:linear-gradient(180deg,var(--accent),rgba(56,189,248,.35));
+    position:relative;transition:height .9s cubic-bezier(.2,.7,.2,1);
+  }
+  .bar.dim{background:linear-gradient(180deg,#6b8196,rgba(107,129,150,.3));}
+  .slide.active .bar{height:var(--h);}
+  .bar .val{position:absolute;top:-26px;left:0;right:0;text-align:center;font-family:var(--mono);font-weight:700;font-size:1.05rem;}
+  .bar-wrap .lbl{margin-top:12px;font-family:var(--mono);font-size:.8rem;color:var(--muted);text-align:center;}
+
+  /* ---------- timeline ---------- */
+  .tl{display:grid;gap:0;}
+  .tl .row{display:grid;grid-template-columns:130px 1fr;gap:18px;padding:13px 0;border-bottom:1px solid var(--line);align-items:start;}
+  .tl .row:last-child{border-bottom:0;}
+  .tl .ms{font-family:var(--mono);color:var(--accent);font-size:.92rem;display:flex;align-items:center;gap:9px;}
+  .tl .desc{color:var(--muted);}
+  .tl .desc b{color:var(--text);font-weight:600;}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
+  .dot.ok{background:var(--ok);}
+  .dot.wip{background:var(--wip);box-shadow:0 0 0 3px rgba(245,166,35,.16);}
+  .st{font-family:var(--mono);font-size:.78rem;}
+  .st.ok{color:var(--ok);}
+  .st.wip{color:var(--wip);}
+
+  .note{
+    margin-top:22px;font-family:var(--mono);font-size:.82rem;color:var(--muted);
+    border-left:2px solid var(--accent);padding:8px 0 8px 14px;
+  }
+  .note b{color:var(--accent);font-weight:600;}
+
+  /* hero */
+  .hero h1{
+    font-size:clamp(3.2rem,11vw,7rem);font-weight:800;letter-spacing:-.04em;line-height:.92;
+    margin:0;background:linear-gradient(180deg,#fff,#9fc6df);-webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .hero .sub{font-size:clamp(1.05rem,2.4vw,1.5rem);color:var(--text);margin:18px 0 6px;max-width:46ch;}
+  .hero .flow{font-family:var(--mono);color:var(--muted);margin-top:14px;font-size:1rem;}
+  .hero .flow b{color:var(--accent);}
+  .scanline{position:relative;height:2px;background:var(--line);overflow:hidden;margin:30px 0 4px;max-width:560px;}
+  .scanline::after{content:"";position:absolute;top:0;left:-40%;width:40%;height:100%;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:sweep 3.4s ease-in-out infinite;}
+  @keyframes sweep{0%{left:-40%}55%{left:100%}100%{left:100%}}
+
+  /* ---------- HUD: frame, progress, counter, nav ---------- */
+  .hud{position:fixed;inset:0;z-index:5;pointer-events:none;}
+  .progress{position:absolute;top:0;left:0;height:3px;background:var(--accent);width:0;transition:width .35s ease;box-shadow:0 0 10px var(--accent);}
+  .corner{position:absolute;width:18px;height:18px;border:2px solid var(--accent);opacity:.5;}
+  .corner.tl{top:20px;left:20px;border-right:0;border-bottom:0;}
+  .corner.tr{top:20px;right:20px;border-left:0;border-bottom:0;}
+  .corner.bl{bottom:20px;left:20px;border-right:0;border-top:0;}
+  .corner.br{bottom:20px;right:20px;border-left:0;border-top:0;}
+  .brand{position:absolute;top:22px;left:46px;font-family:var(--mono);font-size:.74rem;letter-spacing:.18em;color:var(--muted);}
+  .counter{position:absolute;bottom:22px;left:46px;font-family:var(--mono);font-size:.78rem;color:var(--muted);}
+  .counter b{color:var(--accent);}
+  .nav{position:absolute;bottom:18px;right:44px;display:flex;gap:8px;pointer-events:auto;}
+  .nav button{
+    pointer-events:auto;font-family:var(--mono);cursor:pointer;
+    background:var(--surface);border:1px solid var(--line-strong);color:var(--text);
+    width:38px;height:34px;border-radius:6px;font-size:1rem;line-height:1;
+    transition:border-color .2s,color .2s;
+  }
+  .nav button:hover{border-color:var(--accent);color:var(--accent);}
+  .nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .hint{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:.7rem;color:var(--muted);opacity:.6;}
+  @media (max-width:680px){.hint{display:none;}.brand,.counter{left:30px;}}
+
+  /* reveal */
+  .slide.active .inner > *{animation:rise .5s both;}
+  .slide.active .inner > *:nth-child(2){animation-delay:.05s;}
+  .slide.active .inner > *:nth-child(3){animation-delay:.10s;}
+  .slide.active .inner > *:nth-child(4){animation-delay:.15s;}
+  .slide.active .inner > *:nth-child(5){animation-delay:.20s;}
+  .slide.active .inner > *:nth-child(6){animation-delay:.25s;}
+  @keyframes rise{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;}
+    .slide.active .bar{height:var(--h);}
+    .scanline::after{display:none;}
+  }
+
+  /* ---------- print: one slide per page ---------- */
+  @media print{
+    body{overflow:visible;background:#fff;color:#0B1117;}
+    body::before,.hud{display:none;}
+    .deck{height:auto;}
+    .slide{position:relative;display:flex!important;min-height:96vh;page-break-after:always;border-bottom:1px solid #ccc;}
+    .hero h1{color:#0B1117;-webkit-text-fill-color:#0B1117;}
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- 1 · HERO -->
+  <section class="slide active hero">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">01</span> Intelligent Document Processing</p>
+      <h1>OCR&#8209;IDP</h1>
+      <p class="sub">Số hóa biểu mẫu chứng khoán tiếng Việt thành <b>JSON có cấu trúc</b>.</p>
+      <div class="scanline"></div>
+      <p class="flow"><b>PDF / Ảnh scan</b> → tiền xử lý → OCR → trích xuất → <b>JSON</b></p>
+      <div class="chips">
+        <span class="chip"><b>9</b> eForm thật</span>
+        <span class="chip"><b>27</b> trang</span>
+        <span class="chip"><b>5</b> bước pipeline</span>
+        <!-- <span class="chip"><b>89</b> test pass</span> -->
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · BÀI TOÁN -->
+  <section class="slide">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">02</span> Bài toán &amp; bối cảnh</p>
+      <h2 class="title">Vì sao cần tự động hóa?</h2>
+      <div class="rule"></div>
+      <ul class="bul">
+        <li>Biểu mẫu chứng khoán (mở tài khoản, lệnh, danh sách cổ đông…) phần lớn là <b>PDF/ảnh scan tiếng Việt</b>.</li>
+        <li>Nhập liệu thủ công <b>chậm, dễ sai, khó kiểm soát chất lượng</b>.</li>
+        <li>Thách thức kỹ thuật: <b>tiếng Việt có dấu</b>, layout phức tạp (bảng, checkbox, chữ ký), <b>tài liệu nhiều trang</b>, chất lượng scan không đều.</li>
+        <li>Mục tiêu: pipeline <b>end-to-end</b> PDF/ảnh → JSON, <b>đo được độ chính xác</b>, dễ mở rộng theo từng loại biểu mẫu.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3 · TỔNG QUAN -->
+  <section class="slide">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">03</span> Tổng quan giải pháp</p>
+      <h2 class="title">Pipeline module hóa + kiến trúc plugin</h2>
+      <div class="rule"></div>
+      <div class="grid g2">
+        <div class="card feat"><span class="tag">01 · Pipeline</span><h4>5 bước có interface rõ ràng</h4><p>Tiền xử lý → OCR → layout → trích xuất → chuẩn hóa/kiểm tra → JSON.</p></div>
+        <div class="card feat"><span class="tag">02 · Plugin</span><h4>Mỗi biểu mẫu = 1 plugin</h4><p>Thêm biểu mẫu mới không cần sửa core.</p></div>
+        <div class="card feat"><span class="tag">03 · OCR</span><h4>Đa engine sau 1 interface</h4><p>RapidOCR, VietOCR, Tesseract, EasyOCR, PaddleOCR.</p></div>
+        <div class="card feat"><span class="tag">04 · Trích xuất</span><h4>Hybrid rule + LLM</h4><p>Rule/anchor/layout, LLM tùy chọn, tự fallback.</p></div>
+        <div class="card feat"><span class="tag">05 · Đánh giá</span><h4>So ground-truth</h4><p>Accuracy, exact-match, P/R/F1 → MD + CSV.</p></div>
+        <div class="card feat"><span class="tag">06 · Demo</span><h4>3 mặt sử dụng</h4><p>REST API + Web + CLI, đóng gói Docker.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · KIẾN TRÚC PIPELINE -->
+  <section class="slide">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">04</span> Kiến trúc — pipeline</p>
+      <h2 class="title">Từ pdf đến JSON, qua 5 bước</h2>
+      <div class="rule"></div>
+      <div class="pipe">
+        <span class="pchip">PDF /<br>Ảnh</span>
+        <span class="arrow">→</span>
+        <div class="pstep"><span class="n">[1]</span><span class="t">Tiền xử lý</span></div>
+        <span class="arrow">→</span>
+        <div class="pstep"><span class="n">[2]</span><span class="t">OCR</span></div>
+        <span class="arrow">→</span>
+        <div class="pstep"><span class="n">[3]</span><span class="t">Layout</span></div>
+        <span class="arrow">→</span>
+        <div class="pstep"><span class="n">[4]</span><span class="t">Trích xuất</span></div>
+        <span class="arrow">→</span>
+        <div class="pstep"><span class="n">[5]</span><span class="t">Chuẩn hóa /<br>Kiểm tra</span></div>
+        <span class="arrow">→</span>
+        <span class="pchip" style="border-style:solid;border-color:var(--accent);color:var(--accent);">JSON</span>
+      </div>
+      <p class="note">Mỗi bước là một <b>component có interface rõ ràng</b> (<span class="mono">src/ocr_idp/types.py</span>) — thay/nâng cấp từng bước độc lập.</p>
+    </div>
+  </section>
+
+  <!-- 5 · KIẾN TRÚC PLUGIN -->
+  <section class="slide">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">05</span> Kiến trúc — plugin</p>
+      <h2 class="title">Mở rộng mà không chạm vào core</h2>
+      <div class="rule"></div>
+      <div class="grid g2" style="align-items:start;">
+        <ul class="bul">
+          <li>Mỗi loại biểu mẫu là 1 plugin trong <span class="k">src/ocr_idp/forms/&lt;form&gt;/</span>.</li>
+          <li>Đăng ký qua registry <span class="k">@register_form</span> → thêm biểu mẫu mới <b>không sửa core</b>.</li>
+          <!-- <li>Tự nhận diện biểu mẫu qua <span class="k">classify_keywords</span>; fallback an toàn khi chưa có plugin riêng.</li> -->
+          <li>Hiện có plugin <span class="k">generic</span>: kết xuất OCR theo <b>từng trang</b>.</li>
+        </ul>
+        <pre class="code"><span class="m"># output của plugin `generic`</span>
+{
+  <span class="c">"form_type"</span>: "generic",
+  <span class="c">"page_count"</span>: 3,
+  <span class="c">"pages"</span>: [
+    {
+      <span class="c">"page_index"</span>: 0,
+      <span class="c">"n_lines"</span>: 42,
+      <span class="c">"lines"</span>: [ ... ],
+      <span class="c">"text"</span>: "..."
+    }
+  ]
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · TÍNH NĂNG -->
+  <section class="slide">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">06</span> Tính năng sản phẩm</p>
+      <h2 class="title">Những gì hệ thống làm được</h2>
+      <div class="rule"></div>
+      <div class="grid g4">
+        <div class="card feat"><span class="tag">Tiền xử lý</span><h4>Làm sạch ảnh</h4><p>PDF→ảnh (PyMuPDF), deskew, khử nhiễu, binarize, auto-crop; tự phát hiện text-layer.</p></div>
+        <div class="card feat"><span class="tag">Đa trang</span><h4>An toàn theo trang</h4><p>Mỗi dòng mang <span class="mono">page_index</span> → không rò rỉ nhãn↔giá trị giữa trang.</p></div>
+        <div class="card feat"><span class="tag">OCR</span><h4>5 engine, 1 interface</h4><p>RapidOCR (mặc định), VietOCR, Tesseract, EasyOCR, PaddleOCR.</p></div>
+        <div class="card feat"><span class="tag">Layout</span><h4>Hiểu cấu trúc</h4><p>Dòng/section, bảng, checkbox/radio, vùng dấu &amp; chữ ký.</p></div>
+        <div class="card feat"><span class="tag">Trích xuất</span><h4>Hybrid</h4><p>Rule/regex + anchor fuzzy + layout + LLM structured output, cấu hình theo trường.</p></div>
+        <div class="card feat"><span class="tag">Chuẩn hóa</span><h4>Kiểm tra &amp; gắn cờ</h4><p>Ngày/tiền/mã/tên/địa chỉ; cờ thiếu, sai định dạng, confidence thấp.</p></div>
+        <div class="card feat"><span class="tag">Đánh giá</span><h4>So ground-truth</h4><p>Accuracy/trường, exact-match, P/R/F1, thời gian → MD + CSV.</p></div>
+        <div class="card feat"><span class="tag">Demo</span><h4>API · Web · CLI</h4><p>FastAPI + Streamlit + Typer, chạy chung một Pipeline.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · TECH STACK -->
+  <section class="slide">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">07</span> Chi tiết kỹ thuật — stack</p>
+      <h2 class="title">Công nghệ &amp; lý do lựa chọn</h2>
+      <div class="rule"></div>
+      <div class="grid g2" style="align-items:start;">
+        <ul class="bul">
+          <li>Ngôn ngữ: <b>Python</b>. Triển khai chính bằng <b>Docker (Python 3.11)</b> — đóng gói sẵn Tesseract(+vie) &amp; poppler, tương thích torch/paddle.</li>
+          <li>Lý do Docker: host là <b>Python 3.14</b>, torch/paddle chưa có wheel 3.14.</li>
+          <li>LLM trong khung trích xuất là <b>opt-in, mặc định TẮT</b> — không có key vẫn chạy bằng rule/anchor.</li>
+          <li>Cấu hình tập trung: <span class="k">configs/default.yaml</span> + env <span class="k">OCRIDP_*</span>; secret để trong <span class="k">.env</span>.</li>
+        </ul>
+        <div class="card">
+          <span class="tag" style="font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;display:block;margin-bottom:12px;">Thư viện chính</span>
+          <div class="chips" style="margin-top:0;">
+            <span class="chip">Pillow</span><span class="chip">numpy</span><span class="chip">OpenCV</span>
+            <span class="chip">PyMuPDF</span><span class="chip">scikit&#8209;image</span><span class="chip">rapidocr&#8209;onnxruntime</span>
+            <span class="chip">onnxruntime</span><span class="chip">rapidfuzz</span><span class="chip">pydantic</span><span class="chip">typer</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · DEMO -->
+  <section class="slide">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">08</span> Demo — 3 mặt sử dụng</p>
+      <h2 class="title">REST API · Web · CLI</h2>
+      <div class="rule"></div>
+      <div class="grid g3" style="margin-bottom:18px;">
+        <div class="card feat"><span class="tag">FastAPI</span><h4>REST API</h4><p>Tích hợp hệ thống khác; tài liệu tại <span class="mono">/docs</span>.</p></div>
+        <div class="card feat"><span class="tag">Streamlit</span><h4>Web demo</h4><p>Upload → ảnh tiền xử lý + bbox overlay + JSON + bảng cảnh báo + tải về.</p></div>
+        <div class="card feat"><span class="tag">Typer</span><h4>CLI</h4><p><span class="mono">process · batch · evaluate · serve&#8209;api · serve&#8209;web</span></p></div>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Mô tả</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">GET</td><td class="mono">/health</td><td>trạng thái + phiên bản + engine mặc định</td></tr>
+          <tr><td class="mono">GET</td><td class="mono">/forms</td><td>danh sách biểu mẫu hỗ trợ</td></tr>
+          <tr><td class="mono">GET</td><td class="mono">/engines</td><td>engine OCR + tình trạng cài đặt</td></tr>
+          <tr><td class="mono">POST</td><td class="mono">/process</td><td>upload PDF/ảnh (+ form_type, engine) → JSON</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 9 · DỮ LIỆU THẬT -->
+  <section class="slide">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">09</span> Dữ liệu thật</p>
+      <h2 class="title">9 biểu mẫu eForm</h2>
+      <div class="rule"></div>
+      <div class="grid g2" style="align-items:start;">
+        <table class="tbl">
+          <thead><tr><th>Form</th><th class="r">Trang</th><th>Loại</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">eform1</td><td class="r">2</td><td><span class="pill pdf">PDF số</span></td></tr>
+            <tr><td class="mono">eform5</td><td class="r">3</td><td><span class="pill scan">Scan</span></td></tr>
+            <tr><td class="mono">eform7</td><td class="r">3</td><td><span class="pill scan">Scan</span></td></tr>
+            <tr><td class="mono">eform69</td><td class="r">3</td><td><span class="pill scan">Scan</span></td></tr>
+            <tr><td class="mono">eform85</td><td class="r">1</td><td><span class="pill scan">Scan</span></td></tr>
+            <tr><td class="mono">eform92</td><td class="r">2</td><td><span class="pill scan">Scan</span></td></tr>
+            <tr><td class="mono">eform93</td><td class="r">3</td><td><span class="pill scan">Scan</span></td></tr>
+            <tr><td class="mono">eform94</td><td class="r">6</td><td><span class="pill scan">Scan</span></td></tr>
+            <tr><td class="mono">eform100</td><td class="r">4</td><td><span class="pill scan">Scan</span></td></tr>
+          </tbody>
+        </table>
+        <div>
+          <div class="chips" style="margin-top:0;">
+            <span class="chip"><b>9</b> biểu mẫu</span>
+            <span class="chip"><b>27</b> trang</span>
+            <span class="chip"><b>1</b> PDF số</span>
+            <span class="chip"><b>8</b> scan</span>
+          </div>
+          <p class="note" style="margin-top:24px;">Ghép cặp theo số <b>N</b>:<br><span class="mono">data/raw/form_N.pdf</span> ↔ <span class="mono">data/ground_truth/expect_N.json</span></p>
+          <p class="lead" style="margin-top:18px;">Bộ dữ liệu <b>hỗn hợp</b>: 1 PDF số (đọc qua text-layer, chính xác tuyệt đối) và 8 bản scan (bắt buộc OCR — chất lượng phụ thuộc engine).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · ĐỘ CHÍNH XÁC -->
+  <section class="slide">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">10</span> Độ chính xác hiện tại</p>
+      <h2 class="title">Theo 3 mức</h2>
+      <div class="rule"></div>
+      <div class="grid g2" style="align-items:center;">
+        <div>
+          <ul class="bul">
+            <li><b>(a) PDF text-layer</b> (eform1): đọc trực tiếp → <b>chính xác gần tuyệt đối</b>.</li>
+            <li><b>(b) OCR bản scan (RapidOCR)</b>: tốt cho mã/số/ngày, nhưng <b>mất dấu tiếng Việt</b> — <span class="mono">"Đỗ Thị An" → "DO ThiAn"</span>.</li>
+            <li><b>(c) Trích xuất theo schema eform</b>: <b>chưa đo</b> — chưa xây extractor riêng (mới có generic). Số hiện tại chỉ là <b>BASELINE</b>.</li>
+          </ul>
+          <p class="note"><b>Nhận xét:</b> khung pipeline + đo lường đã sẵn sàng; bước tiếp theo là plugin trích xuất chuyên biệt để nâng accuracy thực sự.</p>
+        </div>
+        <!-- <div>
+          <div class="chart">
+            <div class="bar-wrap">
+              <div class="bar" style="--h:82.9%"><span class="val">82.9%</span></div>
+              <span class="lbl">RapidOCR<br>bỏ dấu</span>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar dim" style="--h:64.5%"><span class="val">64.5%</span></div>
+              <span class="lbl">RapidOCR<br>có dấu</span>
+            </div>
+          </div>
+          <p class="lead" style="font-size:.85rem;margin-top:14px;text-align:center;">Độ tương đồng văn bản trên bản scan (host). Khoảng cách = phần dấu tiếng Việt cần VietOCR / LLM-repair khắc phục.</p>
+        </div> -->
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 · CÁC VIỆC ĐÃ LÀM -->
+  <section class="slide">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">11</span> Các việc đã làm</p>
+      <h2 class="title">Roadmap &amp; trạng thái</h2>
+      <div class="rule"></div>
+      <div class="tl">
+        <div class="row"><span class="ms"><span class="dot ok"></span>M0–M3</span><span class="desc"><b>Khung dự án</b> — config/types/CLI/Docker; tiền xử lý; OCR + registry. <span class="st ok">✓ xong</span></span></div>
+        <div class="row"><span class="ms"><span class="dot ok"></span>M4–M7</span><span class="desc"><b>Khung trích xuất</b> — anchor/rule/layout/checkbox/radio/table + LLM + chuẩn hóa/validate. <span class="st ok">✓ xong</span></span></div>
+        <div class="row"><span class="ms"><span class="dot ok"></span>M8–M9</span><span class="desc"><b>OCR đa engine</b> + bộ đánh giá so ground-truth (accuracy/exact/P-R-F1/lỗi → MD/CSV). <span class="st ok">✓ xong</span></span></div>
+        <div class="row"><span class="ms"><span class="dot ok"></span>M10–M11</span><span class="desc"><b>Demo</b> REST API + Web + CLI; hoàn thiện, dọn dead code. <span class="st ok">✓ xong</span></span></div>
+        <!-- <div class="row"><span class="ms"><span class="dot ok"></span>Dữ liệu thật</span><span class="desc"><b>Đa trang an toàn</b> (page_index); gỡ data/code giả lập; plugin <span class="mono">generic</span>; eval ghép raw ↔ ground_truth. <b>89 test pass.</b> <span class="st ok">✓ xong</span></span></div> -->
+        <div class="row"><span class="ms"><span class="dot wip"></span>Tiếp theo</span><span class="desc">Plugin trích xuất <b>riêng từng eform</b> (khớp <span class="mono">expect_N.json</span>); hoặc tầng kiểm tra nghiệp vụ/compliance. <span class="st wip">⏳ sắp triển khai </span></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 · HẠN CHẾ & HƯỚNG PHÁT TRIỂN -->
+  <section class="slide">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">12</span> Hạn chế &amp; hướng phát triển</p>
+      <h2 class="title">Công việc tiếp theo</h2>
+      <div class="rule"></div>
+      <div class="grid g2" style="align-items:start;">
+        <div class="card">
+          <span class="tag" style="font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;color:var(--wip);text-transform:uppercase;display:block;margin-bottom:12px;">Hạn chế</span>
+          <ul class="bul">
+            <li>Chưa có extractor riêng từng eform → output <span class="mono">generic</span> ≠ schema kỳ vọng.</li>
+            <li>RapidOCR trên host <b>mất dấu tiếng Việt</b> ở tên/địa chỉ.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="tag" style="font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;color:var(--ok);text-transform:uppercase;display:block;margin-bottom:12px;">Hướng phát triển</span>
+          <ul class="bul">
+            <li>Plugin trích xuất từng eform khớp <span class="mono">expect_N.json</span>.</li>
+            <li>VietOCR / LLM-repair để <b>giữ dấu tiếng Việt</b>.</li>
+            <li>Tầng <b>kiểm tra nghiệp vụ / compliance</b> trên JSON + tóm tắt tự động.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 · KẾT LUẬN -->
+  <section class="slide hero">
+    <div class="inner">
+      <p class="eyebrow"><span class="num">13</span> Kết luận</p>
+      <h2 class="title" style="font-size:clamp(2.2rem,5vw,3.6rem);">Nền tảng IDP sẵn sàng để nâng cấp</h2>
+      <div class="rule"></div>
+      <ul class="bul" style="max-width:64ch;">
+        <li>Pipeline IDP <b>end-to-end</b> chạy thật trên 9 biểu mẫu — module hóa + kiến trúc plugin.</li>
+        <li>Đo lường <b>minh bạch</b> so ground-truth; trạng thái được trình bày trung thực.</li>
+        <li>Sẵn sàng để nâng độ chính xác <b>theo từng biểu mẫu</b> bằng plugin chuyên biệt.</li>
+      </ul>
+      <!-- <p class="flow" style="font-family:var(--mono);color:var(--accent);margin-top:30px;">// Cảm ơn đã lắng nghe — OCR-IDP</p> -->
+    </div>
+  </section>
+
+</div>
+
+<!-- HUD -->
+<div class="hud">
+  <div class="progress" id="progress"></div>
+  <span class="corner tl"></span><span class="corner tr"></span>
+  <span class="corner bl"></span><span class="corner br"></span>
+  <span class="brand">OCR&#8209;IDP</span>
+  <span class="counter"><b id="cur">01</b> · <span id="total">13</span></span>
+  <span class="hint">← → di chuyển · F toàn màn hình</span>
+  <div class="nav">
+    <button id="prev" aria-label="Slide trước">‹</button>
+    <button id="next" aria-label="Slide sau">›</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var i=0, n=slides.length;
+  var progress=document.getElementById('progress');
+  var cur=document.getElementById('cur');
+  document.getElementById('total').textContent=String(n).padStart(2,'0');
+
+  function show(k){
+    i=Math.max(0,Math.min(n-1,k));
+    slides.forEach(function(s,idx){s.classList.toggle('active',idx===i);});
+    progress.style.width=((i+1)/n*100)+'%';
+    cur.textContent=String(i+1).padStart(2,'0');
+    if(location.hash!=='#'+(i+1)) history.replaceState(null,'','#'+(i+1));
+  }
+  function next(){show(i+1);}
+  function prev(){show(i-1);}
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();next();}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();}
+    else if(e.key==='Home'){show(0);}
+    else if(e.key==='End'){show(n-1);}
+    else if(e.key==='f'||e.key==='F'){
+      if(!document.fullscreenElement){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}
+      else{document.exitFullscreen&&document.exitFullscreen();}
+    }
+  });
+  document.getElementById('next').addEventListener('click',next);
+  document.getElementById('prev').addEventListener('click',prev);
+
+  // swipe
+  var x0=null;
+  document.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(x0===null)return;var dx=e.changedTouches[0].clientX-x0;
+    if(Math.abs(dx)>50){dx<0?next():prev();}x0=null;
+  },{passive:true});
+
+  var start=parseInt((location.hash||'').replace('#',''),10);
+  show(isNaN(start)?0:start-1);
+})();
+</script>
+</body>
+</html>
