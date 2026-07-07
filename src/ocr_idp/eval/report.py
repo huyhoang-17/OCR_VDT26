@@ -145,9 +145,11 @@ def evaluate_dataset(
     data_root: str | Path = "data",
 ) -> EvalReport:
     config = config or load_config()
+    from ..forms.base import list_forms
     from ..pipeline import Pipeline
 
     pipe = Pipeline(config)
+    known_forms = set(list_forms())
     items = _discover(data_root, kind, forms)
     # kind='scan' -> ép OCR mọi trang (kể cả PDF số có text-layer) để đo chất lượng OCR.
     use_text_layer = kind != "scan"
@@ -156,8 +158,10 @@ def evaluate_dataset(
     for form_type, stem, inp, gt_path in items:
         gt = json.loads(gt_path.read_text(encoding="utf-8"))
         try:
-            # form_type=None -> pipeline fallback 'generic' (chưa có extractor eform).
-            res = pipe.run(inp, use_text_layer=use_text_layer)
+            # Đã biết loại biểu mẫu (từ tên file) -> dùng đúng extractor chuyên biệt
+            # nếu đã có; chưa có -> 'generic' (đo baseline). Không phụ thuộc nhận diện.
+            ft = form_type if form_type in known_forms else "generic"
+            res = pipe.run(inp, form_type=ft, use_text_layer=use_text_layer)
             outcomes = compare_documents(res.output_json, gt)
             form_exact = bool(outcomes) and all(o.exact for o in outcomes)
             samples.append(SampleResult(form_type, stem, str(inp), outcomes, form_exact, dict(res.timings_ms)))

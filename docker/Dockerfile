@@ -44,7 +44,7 @@ RUN pip install --upgrade pip \
 # Ghi chú: lần chạy VietOCR ĐẦU TIÊN sẽ tải trọng số model về (cần mạng).
 
 # Thư mục dữ liệu/đầu ra (mount volume khi chạy)
-RUN mkdir -p data/raw data/processed data/ground_truth data/synthetic outputs logs
+RUN mkdir -p data/raw data/processed data/ground_truth outputs logs
 
 EXPOSE 8000 8501
 

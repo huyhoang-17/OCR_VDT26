@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>OCR-IDP — Trình bày đồ án</title>
+<title>OCR-IDP — Trình bày Project OCR</title>
 <style>
   :root{
     --ground:#0B1117;
@@ -252,13 +252,26 @@
     .scanline::after{display:none;}
   }
 
-  /* ---------- print: one slide per page ---------- */
+  /* ---------- print / export PDF: one 16:9 slide per page, giữ nền tối ---------- */
+  @page{size:1600px 900px;margin:0;}
   @media print{
-    body{overflow:visible;background:#fff;color:#0B1117;}
-    body::before,.hud{display:none;}
-    .deck{height:auto;}
-    .slide{position:relative;display:flex!important;min-height:96vh;page-break-after:always;border-bottom:1px solid #ccc;}
-    .hero h1{color:#0B1117;-webkit-text-fill-color:#0B1117;}
+    html,body{height:auto;overflow:visible;background:var(--ground);
+      -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body::before,.hud{display:none!important;}
+    .deck{height:auto;width:auto;}
+    .slide{
+      position:relative;inset:auto;display:flex!important;
+      width:1600px;height:900px;overflow:hidden;
+      padding:64px 96px;background:var(--ground);
+      page-break-after:always;break-after:page;
+    }
+    .slide:last-child{page-break-after:auto;break-after:auto;}
+    .inner{max-width:1400px;}
+    /* hiện đầy đủ mọi slide khi in (không phụ thuộc .active) + tắt hiệu ứng */
+    .slide *{animation:none!important;}
+    .slide .inner>*{opacity:1!important;transform:none!important;}
+    .bar{height:var(--h)!important;transition:none!important;}
+    .scanline::after{display:none!important;}
   }
 </style>
 </head>
@@ -475,30 +488,32 @@
   <section class="slide">
     <div class="inner">
       <p class="eyebrow"><span class="num">10</span> Độ chính xác hiện tại</p>
-      <h2 class="title">Theo 3 mức</h2>
+      <h2 class="title">Baseline trên dữ liệu thật</h2>
       <div class="rule"></div>
       <div class="grid g2" style="align-items:center;">
         <div>
           <ul class="bul">
-            <li><b>(a) PDF text-layer</b> (eform1): đọc trực tiếp → <b>chính xác gần tuyệt đối</b>.</li>
-            <li><b>(b) OCR bản scan (RapidOCR)</b>: tốt cho mã/số/ngày, nhưng <b>mất dấu tiếng Việt</b> — <span class="mono">"Đỗ Thị An" → "DO ThiAn"</span>.</li>
-            <li><b>(c) Trích xuất theo schema eform</b>: <b>chưa đo</b> — chưa xây extractor riêng (mới có generic). Số hiện tại chỉ là <b>BASELINE</b>.</li>
+            <li><b>Baseline đo được</b> (9 eform, plugin <span class="mono">generic</span>): accuracy theo trường <b>13.8%</b> (65/472); exact-match toàn form <b>0%</b>.</li>
+            <li><b>Vì sao thấp:</b> <span class="mono">generic</span> chỉ kết xuất OCR thô theo trang → <b>403/472 trường "missing"</b> so với schema eform — chưa có extractor riêng.</li>
+            <li><b>Chất lượng OCR</b> (quan sát): mã/số/ngày đọc tốt; tên/địa chỉ tiếng Việt mất dấu → cần VietOCR / LLM-repair.</li>
           </ul>
-          <p class="note"><b>Nhận xét:</b> khung pipeline + đo lường đã sẵn sàng; bước tiếp theo là plugin trích xuất chuyên biệt để nâng accuracy thực sự.</p>
+          <p class="note"><b>Nút thắt:</b> <span class="mono">--kind pdf</span> và <span class="mono">scan</span> cho kết quả y hệt → vấn đề là <b>thiếu extractor</b>, không phải OCR. Đây là vạch xuất phát để nâng cấp.</p>
         </div>
-        <!-- <div>
-          <div class="chart">
-            <div class="bar-wrap">
-              <div class="bar" style="--h:82.9%"><span class="val">82.9%</span></div>
-              <span class="lbl">RapidOCR<br>bỏ dấu</span>
-            </div>
-            <div class="bar-wrap">
-              <div class="bar dim" style="--h:64.5%"><span class="val">64.5%</span></div>
-              <span class="lbl">RapidOCR<br>có dấu</span>
-            </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:clamp(3rem,6vw,4.6rem);font-weight:800;color:var(--accent);line-height:1;">13.8%</div>
+          <div style="font-family:var(--mono);font-size:.8rem;color:var(--muted);margin:6px 0 22px;">accuracy theo trường · baseline · 65/472</div>
+          <div style="display:flex;height:36px;border-radius:6px;overflow:hidden;border:1px solid var(--line-strong);font-family:var(--mono);font-size:.72rem;font-weight:700;">
+            <div style="width:13.8%;background:var(--ok);display:flex;align-items:center;justify-content:center;color:#06140d;">13.8%</div>
+            <div style="width:85.4%;background:rgba(245,166,35,.85);display:flex;align-items:center;justify-content:center;color:#1b1303;">thiếu 85.4%</div>
+            <div style="flex:1;background:#6b8196;"></div>
           </div>
-          <p class="lead" style="font-size:.85rem;margin-top:14px;text-align:center;">Độ tương đồng văn bản trên bản scan (host). Khoảng cách = phần dấu tiếng Việt cần VietOCR / LLM-repair khắc phục.</p>
-        </div> -->
+          <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-family:var(--mono);font-size:.76rem;color:var(--muted);">
+            <span><span style="color:var(--ok);">■</span> 65 đúng</span>
+            <span><span style="color:var(--wip);">■</span> 403 thiếu</span>
+            <span><span style="color:#6b8196;">■</span> 4 sai định dạng</span>
+            <span>· tổng 472</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -510,12 +525,12 @@
       <h2 class="title">Roadmap &amp; trạng thái</h2>
       <div class="rule"></div>
       <div class="tl">
-        <div class="row"><span class="ms"><span class="dot ok"></span>M0–M3</span><span class="desc"><b>Khung dự án</b> — config/types/CLI/Docker; tiền xử lý; OCR + registry. <span class="st ok">✓ xong</span></span></div>
-        <div class="row"><span class="ms"><span class="dot ok"></span>M4–M7</span><span class="desc"><b>Khung trích xuất</b> — anchor/rule/layout/checkbox/radio/table + LLM + chuẩn hóa/validate. <span class="st ok">✓ xong</span></span></div>
-        <div class="row"><span class="ms"><span class="dot ok"></span>M8–M9</span><span class="desc"><b>OCR đa engine</b> + bộ đánh giá so ground-truth (accuracy/exact/P-R-F1/lỗi → MD/CSV). <span class="st ok">✓ xong</span></span></div>
-        <div class="row"><span class="ms"><span class="dot ok"></span>M10–M11</span><span class="desc"><b>Demo</b> REST API + Web + CLI; hoàn thiện, dọn dead code. <span class="st ok">✓ xong</span></span></div>
+        <div class="row"><span class="ms"><span class="dot ok"></span>M0–M3</span><span class="desc"><b>Khung dự án</b> — config/types/CLI/Docker; tiền xử lý; OCR + registry. <span class="st ok"> xong</span></span></div>
+        <div class="row"><span class="ms"><span class="dot ok"></span>M4–M7</span><span class="desc"><b>Khung trích xuất</b> — anchor/rule/layout/checkbox/radio/table + LLM + chuẩn hóa/validate. <span class="st ok"> xong</span></span></div>
+        <div class="row"><span class="ms"><span class="dot ok"></span>M8–M9</span><span class="desc"><b>OCR đa engine</b> + bộ đánh giá so ground-truth (accuracy/exact/P-R-F1/lỗi → MD/CSV). <span class="st ok"> xong</span></span></div>
+        <div class="row"><span class="ms"><span class="dot ok"></span>M10–M11</span><span class="desc"><b>Demo</b> REST API + Web + CLI; hoàn thiện, dọn dead code. <span class="st ok"> xong</span></span></div>
         <!-- <div class="row"><span class="ms"><span class="dot ok"></span>Dữ liệu thật</span><span class="desc"><b>Đa trang an toàn</b> (page_index); gỡ data/code giả lập; plugin <span class="mono">generic</span>; eval ghép raw ↔ ground_truth. <b>89 test pass.</b> <span class="st ok">✓ xong</span></span></div> -->
-        <div class="row"><span class="ms"><span class="dot wip"></span>Tiếp theo</span><span class="desc">Plugin trích xuất <b>riêng từng eform</b> (khớp <span class="mono">expect_N.json</span>); hoặc tầng kiểm tra nghiệp vụ/compliance. <span class="st wip">⏳ sắp triển khai </span></span></div>
+        <div class="row"><span class="ms"><span class="dot wip"></span>Tiếp theo</span><span class="desc">Plugin trích xuất <b>riêng từng eform</b> (khớp <span class="mono">expect_N.json</span>); hoặc tầng kiểm tra nghiệp vụ/compliance. <span class="st wip"> sắp triển khai </span></span></div>
       </div>
     </div>
   </section>

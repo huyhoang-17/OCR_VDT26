@@ -1,8 +1,8 @@
 """Test bàn giao: registry plugin + tính toàn vẹn khung trích xuất + CLI smoke.
 
-Sau khi gỡ dữ liệu/plugin synthetic, registry chỉ còn plugin 'generic' (fallback
-kết xuất OCR theo trang). Khung trích xuất theo trường (strategy/normalizer) vẫn
-được giữ để thêm plugin chuyên biệt cho từng eform về sau mà không sửa core.
+Registry gồm: 'generic' (fallback kết xuất OCR theo trang) và extractor chuyên
+biệt cho cả 9 eform thật (eform1/5/7/69/85/92/93/94/100). Khung trích xuất theo
+trường (strategy/normalizer) vẫn được giữ để mở rộng mà không sửa core.
 """
 
 from __future__ import annotations
@@ -13,11 +13,23 @@ from ocr_idp.forms.base import get_form, list_forms
 from ocr_idp.normalize.apply import NORMALIZERS
 
 
-def test_generic_plugin_registered() -> None:
-    assert set(list_forms()) == {"generic"}
+def test_all_plugins_registered() -> None:
+    expected = {
+        "generic", "eform1", "eform5", "eform7", "eform69",
+        "eform85", "eform92", "eform93", "eform94", "eform100",
+    }
+    assert set(list_forms()) == expected
     plugin = get_form("generic")
     assert plugin.form_type == "generic"
     assert plugin.field_specs() == []  # generic không trích theo trường
+
+
+def test_eform_plugins_have_keywords() -> None:
+    for ft in ("eform1", "eform5", "eform7", "eform69", "eform85",
+               "eform92", "eform93", "eform94", "eform100"):
+        plugin = get_form(ft)
+        assert plugin.form_type == ft
+        assert plugin.classify_keywords, f"{ft} thiếu classify_keywords"
 
 
 def test_extraction_framework_intact() -> None:

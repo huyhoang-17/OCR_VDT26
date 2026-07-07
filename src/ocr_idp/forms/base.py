@@ -38,6 +38,15 @@ def register_form(cls: type["FormPlugin"]) -> type["FormPlugin"]:
 def _ensure_loaded() -> None:
     """Import các module plugin để decorator chạy."""
     from .generic import plugin  # noqa: F401  (fallback OCR theo trang)
+    from .eform1 import plugin as _eform1  # noqa: F401  (Mẫu số 01)
+    from .eform85 import plugin as _eform85  # noqa: F401  (Mẫu số 85)
+    from .eform92 import plugin as _eform92  # noqa: F401  (Mẫu số 92)
+    from .eform100 import plugin as _eform100  # noqa: F401  (Mẫu số 100)
+    from .eform69 import plugin as _eform69  # noqa: F401  (Mẫu số 69)
+    from .eform5 import plugin as _eform5  # noqa: F401  (Mẫu số 05)
+    from .eform7 import plugin as _eform7  # noqa: F401  (Mẫu số 07)
+    from .eform93 import plugin as _eform93  # noqa: F401  (Mẫu số 93)
+    from .eform94 import plugin as _eform94  # noqa: F401  (Mẫu số 94)
 
 
 def list_forms() -> dict[str, str]:
