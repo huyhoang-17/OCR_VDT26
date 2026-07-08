@@ -1,0 +1,449 @@
+{
+  "n_cases": 35,
+  "tp": 35,
+  "fp": 0,
+  "fn": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "baseline_violations": {
+    "eform93": [
+      "eform93.individual_ratio"
+    ],
+    "eform94": [
+      "eform94.additional_capital_product",
+      "eform94.merged_capital_reconciliation",
+      "eform94.post_capital_product"
+    ]
+  },
+  "skipped_rules": [
+    "eform100.document_after_bank_license",
+    "eform100.document_after_custody_certificate",
+    "eform93.individual_ratio",
+    "eform94.additional_capital_product",
+    "eform94.post_capital_product",
+    "eform94.merged_capital_reconciliation"
+  ],
+  "cases": [
+    {
+      "form_type": "eform1",
+      "target_rule": "eform1.capital_product",
+      "mutated_field": "EformzzContentItemsww0wwzzEform1zzTongsovondahuydongzzValue",
+      "expected": [
+        "eform1.capital_product"
+      ],
+      "predicted": [
+        "eform1.capital_product"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform1",
+      "target_rule": "eform1.raised_within_total",
+      "mutated_field": "EformzzContentItemsww0wwzzEform1zzSovondahuydongzzValue",
+      "expected": [
+        "eform1.raised_within_total"
+      ],
+      "predicted": [
+        "eform1.raised_within_total"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform1",
+      "target_rule": "eform1.offering_after_certificate",
+      "mutated_field": "EformzzContentItemsww0wwzzEform1zzNgayketthucdotchaobanzzValue",
+      "expected": [
+        "eform1.offering_after_certificate"
+      ],
+      "predicted": [
+        "eform1.offering_after_certificate"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform1",
+      "target_rule": "eform1.report_after_offering",
+      "mutated_field": "EformzzContentItemsww0wwzzEform1zzNgaythangnamzzValue",
+      "expected": [
+        "eform1.report_after_offering"
+      ],
+      "predicted": [
+        "eform1.report_after_offering"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform100",
+      "target_rule": "eform100.document_after_management_license",
+      "mutated_field": "EformzzContentItemsww0wwzzEform100zzNgaycapGPzzValue",
+      "expected": [
+        "eform100.document_after_management_license"
+      ],
+      "predicted": [
+        "eform100.document_after_management_license"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform5",
+      "target_rule": "eform5.outstanding_value",
+      "mutated_field": "EformzzContentItemsww0wwzzEform5zzTonggiatricophieudangluuhanhzzValue",
+      "expected": [
+        "eform5.outstanding_value"
+      ],
+      "predicted": [
+        "eform5.outstanding_value"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform5",
+      "target_rule": "eform5.planned_capital",
+      "mutated_field": "EformzzContentItemsww0wwzzEform5zzTonggiatrivonhuydongdukienzzValue",
+      "expected": [
+        "eform5.planned_capital"
+      ],
+      "predicted": [
+        "eform5.planned_capital"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform5",
+      "target_rule": "eform5.raised_within_charter",
+      "mutated_field": "EformzzContentItemsww0wwzzEform5zzVondieulezzValue",
+      "expected": [
+        "eform5.raised_within_charter"
+      ],
+      "predicted": [
+        "eform5.raised_within_charter"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform5",
+      "target_rule": "eform5.report_after_change",
+      "mutated_field": "EformzzContentItemsww0wwzzEform5zzNgaytaobaocaozzValue",
+      "expected": [
+        "eform5.report_after_change"
+      ],
+      "predicted": [
+        "eform5.report_after_change"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform69",
+      "target_rule": "eform69.capital_not_decreased",
+      "mutated_field": "EformzzContentItemsww0wwzzEform69zzVondieulemoizzValue",
+      "expected": [
+        "eform69.capital_not_decreased"
+      ],
+      "predicted": [
+        "eform69.capital_not_decreased"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform69",
+      "target_rule": "eform69.document_after_license",
+      "mutated_field": "EformzzContentItemsww0wwzzEform69zzNgaytaogiayzzValue",
+      "expected": [
+        "eform69.document_after_license"
+      ],
+      "predicted": [
+        "eform69.document_after_license"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform69",
+      "target_rule": "eform69.old_representative_id_after_birth",
+      "mutated_field": "EformzzContentItemsww0wwzzEform69zzNgaycapCMNDHochieucuanguoidaidiencuzzValue",
+      "expected": [
+        "eform69.old_representative_id_after_birth"
+      ],
+      "predicted": [
+        "eform69.old_representative_id_after_birth"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform69",
+      "target_rule": "eform69.new_representative_id_after_birth",
+      "mutated_field": "EformzzContentItemsww0wwzzEform69zzNgaycapCMNDHochieucuanguoidaidienmoizzValue",
+      "expected": [
+        "eform69.new_representative_id_after_birth"
+      ],
+      "predicted": [
+        "eform69.new_representative_id_after_birth"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform7",
+      "target_rule": "eform7.offer_face_value",
+      "mutated_field": "EformzzContentItemsww0wwzzEform7zzSoluongtraiphieudangkychaobanzzValue",
+      "expected": [
+        "eform7.offer_face_value"
+      ],
+      "predicted": [
+        "eform7.offer_face_value"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform7",
+      "target_rule": "eform7.secured_covers_offer",
+      "mutated_field": "EformzzContentItemsww0wwzzEform7zzGiatriTPduocbaodamzzValue",
+      "expected": [
+        "eform7.secured_covers_offer"
+      ],
+      "predicted": [
+        "eform7.secured_covers_offer"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform7",
+      "target_rule": "eform7.guarantee_covers_offer",
+      "mutated_field": "EformzzContentItemsww0wwzzEform7zzGiatribaolanhzzValue",
+      "expected": [
+        "eform7.guarantee_covers_offer"
+      ],
+      "predicted": [
+        "eform7.guarantee_covers_offer"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform7",
+      "target_rule": "eform7.collateral_covers_secured",
+      "mutated_field": "EformzzContentItemsww0wwzzEform7zzGiatritaisanbaodamzzValue",
+      "expected": [
+        "eform7.collateral_covers_secured"
+      ],
+      "predicted": [
+        "eform7.collateral_covers_secured"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform7",
+      "target_rule": "eform7.outstanding_reconciliation",
+      "mutated_field": "EformzzContentItemsww0wwzzEform7zzTonggiatriTPluuhanhTongzzValue",
+      "expected": [
+        "eform7.outstanding_reconciliation"
+      ],
+      "predicted": [
+        "eform7.outstanding_reconciliation"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform7",
+      "target_rule": "eform7.raised_reconciliation",
+      "mutated_field": "EformzzContentItemsww0wwzzEform7zzTonggiatriTPhuydong12thangTongzzValue",
+      "expected": [
+        "eform7.raised_reconciliation"
+      ],
+      "predicted": [
+        "eform7.raised_reconciliation"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform7",
+      "target_rule": "eform7.report_after_certificate_change",
+      "mutated_field": "EformzzContentItemsww0wwzzEform7zzNgaybaocaozzValue",
+      "expected": [
+        "eform7.report_after_certificate_change"
+      ],
+      "predicted": [
+        "eform7.report_after_certificate_change"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform85",
+      "target_rule": "eform85.id_after_birth",
+      "mutated_field": "EformzzContentItemsww0wwzzEform85zzNgaycapdinhdanhzzValue",
+      "expected": [
+        "eform85.id_after_birth"
+      ],
+      "predicted": [
+        "eform85.id_after_birth"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform85",
+      "target_rule": "eform85.certificate_after_id",
+      "mutated_field": "EformzzContentItemsww0wwzzEform85zzNgaycapchungchihanhnghezzValue",
+      "expected": [
+        "eform85.certificate_after_id"
+      ],
+      "predicted": [
+        "eform85.certificate_after_id"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform92",
+      "target_rule": "eform92.charter_capital",
+      "mutated_field": "EformzzContentItemsww0wwzzEform92zzVondieulezzValue",
+      "expected": [
+        "eform92.charter_capital"
+      ],
+      "predicted": [
+        "eform92.charter_capital"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform92",
+      "target_rule": "eform92.lot_reconciliation",
+      "mutated_field": "EformzzContentItemsww0wwzzEform92zzSoloCCquyzzValue",
+      "expected": [
+        "eform92.lot_reconciliation"
+      ],
+      "predicted": [
+        "eform92.lot_reconciliation"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform92",
+      "target_rule": "eform92.offering_after_license",
+      "mutated_field": "EformzzContentItemsww0wwzzEform92zzNgaycapGCNdkychaobanzzValue",
+      "expected": [
+        "eform92.offering_after_license"
+      ],
+      "predicted": [
+        "eform92.offering_after_license"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform93",
+      "target_rule": "eform93.org_investor_count",
+      "mutated_field": "EformzzContentItemsww0wwzzEform93zzSoluongnhadautuTochucTongzzText",
+      "expected": [
+        "eform93.org_investor_count"
+      ],
+      "predicted": [
+        "eform93.org_investor_count"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform93",
+      "target_rule": "eform93.org_unit_count",
+      "mutated_field": "EformzzContentItemsww0wwzzEform93zzSoluongchungchiquyTochucTongzzText",
+      "expected": [
+        "eform93.org_unit_count"
+      ],
+      "predicted": [
+        "eform93.org_unit_count"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform93",
+      "target_rule": "eform93.org_ratio",
+      "mutated_field": "EformzzContentItemsww0wwzzEform93zzTylevongopTochucTongzzText",
+      "expected": [
+        "eform93.org_ratio"
+      ],
+      "predicted": [
+        "eform93.org_ratio"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform93",
+      "target_rule": "eform93.individual_investor_count",
+      "mutated_field": "EformzzContentItemsww0wwzzEform93zzSoluongnhadautuCanhanTongzzText",
+      "expected": [
+        "eform93.individual_investor_count"
+      ],
+      "predicted": [
+        "eform93.individual_investor_count"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform93",
+      "target_rule": "eform93.individual_unit_count",
+      "mutated_field": "EformzzContentItemsww0wwzzEform93zzSoluongchungchiquyCanhanTongzzText",
+      "expected": [
+        "eform93.individual_unit_count"
+      ],
+      "predicted": [
+        "eform93.individual_unit_count"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform94",
+      "target_rule": "eform94.document_after_certificate",
+      "mutated_field": "EformzzContentItemsww0wwzzEform94zzNgaytaogiayzzValue",
+      "expected": [
+        "eform94.document_after_certificate"
+      ],
+      "predicted": [
+        "eform94.document_after_certificate"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform94",
+      "target_rule": "eform94.old_duration",
+      "mutated_field": "EformzzContentItemsww0wwzzEform94zzThoihanhoatdongcudenngayzzValue",
+      "expected": [
+        "eform94.old_duration"
+      ],
+      "predicted": [
+        "eform94.old_duration"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform94",
+      "target_rule": "eform94.new_duration",
+      "mutated_field": "EformzzContentItemsww0wwzzEform94zzthoihanrutngandenngayzzValue",
+      "expected": [
+        "eform94.new_duration"
+      ],
+      "predicted": [
+        "eform94.new_duration"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform94",
+      "target_rule": "eform94.old_capital_product",
+      "mutated_field": "EformzzContentItemsww0wwzzEform94zzVondieulequytruockhithaydoizzValue",
+      "expected": [
+        "eform94.old_capital_product"
+      ],
+      "predicted": [
+        "eform94.old_capital_product"
+      ],
+      "detected": true
+    },
+    {
+      "form_type": "eform94",
+      "target_rule": "eform94.post_unit_reconciliation",
+      "mutated_field": "EformzzContentItemsww0wwzzEform94zzSLCCquycophanluuhanhsaukhithaydoizzValue",
+      "expected": [
+        "eform94.post_unit_reconciliation"
+      ],
+      "predicted": [
+        "eform94.post_unit_reconciliation"
+      ],
+      "detected": true
+    }
+  ]
+}

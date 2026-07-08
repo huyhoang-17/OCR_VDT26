@@ -1,0 +1,88 @@
+{
+  "report_id": "CR-E8C68EEE8FD8",
+  "created_at": "2026-07-08T00:01:14.577900+00:00",
+  "form_type": "eform1",
+  "overall_status": "compliant",
+  "counts": {
+    "pass": 4,
+    "violation": 0,
+    "skipped": 0
+  },
+  "error_count": 0,
+  "warning_count": 0,
+  "summary": "Đã thực hiện 4 kiểm tra nghiệp vụ cho eform1: 4 đạt, 0 vi phạm và 0 chưa đánh giá. Không phát hiện vi phạm nghiệp vụ liên-trường.",
+  "summary_source": "deterministic",
+  "warnings": [],
+  "checks": [
+    {
+      "rule_id": "eform1.capital_product",
+      "title": "Tổng vốn huy động bằng số cổ phiếu nhân mệnh giá",
+      "severity": "error",
+      "status": "pass",
+      "message": "Đạt: Tổng vốn huy động bằng số cổ phiếu nhân mệnh giá.",
+      "fields": {
+        "total_raised": "EformzzContentItemsww0wwzzEform1zzTongsovondahuydongzzValue",
+        "issued_shares": "EformzzContentItemsww0wwzzEform1zzTongsoluongcophieuphathanhzzValue",
+        "par_value": "EformzzContentItemsww0wwzzEform1zzMenhgiacophieuzzValue"
+      },
+      "values": {
+        "total_raised": "200000.000.000",
+        "issued_shares": "20000.000",
+        "par_value": "10000"
+      },
+      "actual": "200.000.000.000",
+      "expected": "200.000.000.000"
+    },
+    {
+      "rule_id": "eform1.raised_within_total",
+      "title": "Số vốn đã huy động không vượt tổng vốn huy động",
+      "severity": "error",
+      "status": "pass",
+      "message": "Đạt: Số vốn đã huy động không vượt tổng vốn huy động.",
+      "fields": {
+        "raised_amount": "EformzzContentItemsww0wwzzEform1zzSovondahuydongzzValue",
+        "total_raised": "EformzzContentItemsww0wwzzEform1zzTongsovondahuydongzzValue"
+      },
+      "values": {
+        "raised_amount": "150000000.000",
+        "total_raised": "200000.000.000"
+      },
+      "actual": "150.000.000.000",
+      "expected": "<= 200.000.000.000"
+    },
+    {
+      "rule_id": "eform1.offering_after_certificate",
+      "title": "Ngày kết thúc chào bán không trước ngày cấp giấy chứng nhận",
+      "severity": "error",
+      "status": "pass",
+      "message": "Đạt: Ngày kết thúc chào bán không trước ngày cấp giấy chứng nhận.",
+      "fields": {
+        "certificate_date": "EformzzContentItemsww0wwzzEform1zzNgaycapGCNUBCKzzValue",
+        "offering_end": "EformzzContentItemsww0wwzzEform1zzNgayketthucdotchaobanzzValue"
+      },
+      "values": {
+        "certificate_date": "2025-10-15T00:00:00+00:00",
+        "offering_end": "2025-11-30T00:00:00+00:00"
+      },
+      "actual": "2025-11-30",
+      "expected": ">= 2025-10-15"
+    },
+    {
+      "rule_id": "eform1.report_after_offering",
+      "title": "Ngày báo cáo không trước ngày kết thúc chào bán",
+      "severity": "error",
+      "status": "pass",
+      "message": "Đạt: Ngày báo cáo không trước ngày kết thúc chào bán.",
+      "fields": {
+        "offering_end": "EformzzContentItemsww0wwzzEform1zzNgayketthucdotchaobanzzValue",
+        "report_date": "EformzzContentItemsww0wwzzEform1zzNgaythangnamzzValue"
+      },
+      "values": {
+        "offering_end": "2025-11-30T00:00:00+00:00",
+        "report_date": "2026-04-21T00:00:00+00:00"
+      },
+      "actual": "2026-04-21",
+      "expected": ">= 2025-11-30"
+    }
+  ]
+}
