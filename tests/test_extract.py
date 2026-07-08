@@ -73,6 +73,24 @@ def test_rule_regex_registration_date() -> None:
     assert "10" in fv.raw_value and "2024" in fv.raw_value
 
 
+def test_regex_form_matches_unaccented_label_but_preserves_accented_value() -> None:
+    """Dò RULE trên bản bỏ dấu nhưng phải trả lại đúng giá trị tiếng Việt gốc."""
+    from ocr_idp.forms._regex_plugin import RegexFormPlugin
+
+    class AccentPlugin(RegexFormPlugin):
+        form_type = "accent_test"
+        RULES = [
+            ("FULL_NAME", "text", r"(?i)ho va ten:\s*(.+?)\s+so tai khoan"),
+        ]
+
+    result = AccentPlugin().extract(
+        _ctx([_line("Họ và tên: Nguyễn Văn Ánh  Số tài khoản: 0123", 0, 0, 300, 20)]),
+        load_config(),
+    )
+
+    assert result.fields["results.FULL_NAME"].value == "Nguyễn Văn Ánh"
+
+
 # --------------------------- Orchestrator/deferred ------------------------- #
 def test_orchestrator_checkbox_without_image() -> None:
     # Checkbox là extractor THẬT (M5) nhưng thiếu ảnh -> trả [] + cảnh báo

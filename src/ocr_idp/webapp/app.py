@@ -55,6 +55,10 @@ def main() -> None:
         engine = st.selectbox("Engine OCR", engines, index=default_idx)
         use_text_layer = st.checkbox("Dùng text-layer PDF (nhanh & chính xác)", value=True)
         show_overlay = st.checkbox("Hiện overlay bbox OCR", value=True)
+        summary_provider = st.selectbox(
+            "Tóm tắt biên bản", ["deterministic", "openai", "gemini"], index=0,
+            help="OpenAI/Gemini chỉ diễn đạt kết quả luật đã tính; thiếu key sẽ tự fallback.",
+        )
 
     uploaded = st.file_uploader("Tải lên PDF hoặc ảnh biểu mẫu", type=["pdf", "png", "jpg", "jpeg"])
     if uploaded is None:
@@ -120,6 +124,77 @@ def main() -> None:
         st.table({"#": list(range(1, len(warnings) + 1)), "Nội dung": warnings})
     else:
         st.success("Không có cảnh báo — mọi trường đạt ngưỡng tin cậy.")
+
+    st.subheader("Kiểm tra nghiệp vụ liên-trường")
+    # Cache theo chính JSON đầu vào: đổi trang/overlay không làm chạy lại rule hoặc LLM.
+    fingerprint = json.dumps(result.output_json, ensure_ascii=False, sort_keys=True, default=str)
+    if st.session_state.get("compliance_fingerprint") != fingerprint:
+        try:
+            from ocr_idp.compliance.service import build_compliance_report
+
+            st.session_state["compliance_report"] = build_compliance_report(
+                result.output_json, provider="deterministic"
+            )
+            st.session_state["compliance_fingerprint"] = fingerprint
+        except ValueError:
+            st.session_state.pop("compliance_report", None)
+
+    compliance = st.session_state.get("compliance_report")
+    if compliance is None:
+        st.info("Biểu mẫu này chưa có dữ liệu `results` hoặc chưa có bộ luật nghiệp vụ.")
+        return
+
+    if summary_provider != "deterministic" and st.button(
+        f"Sinh tóm tắt bằng {summary_provider.title()}"
+    ):
+        from ocr_idp.compliance.service import build_compliance_report
+
+        with st.spinner(f"Đang gọi {summary_provider}..."):
+            compliance = build_compliance_report(
+                result.output_json, provider=summary_provider
+            )
+        st.session_state["compliance_report"] = compliance
+
+    counts = compliance.counts
+    b1, b2, b3, b4 = st.columns(4)
+    b1.metric("Kết luận", compliance.overall_status)
+    b2.metric("Đạt", counts["pass"])
+    b3.metric("Vi phạm", counts["violation"])
+    b4.metric("Chưa đánh giá", counts["skipped"])
+    st.caption(f"Tóm tắt ({compliance.summary_source})")
+    st.write(compliance.summary)
+    rows = [
+        {
+            "Mã luật": c.rule_id,
+            "Mức độ khi vi phạm": c.severity.value,
+            "Kết quả": c.status.value,
+            "Nội dung": c.message,
+            "Thực tế": c.actual,
+            "Kỳ vọng": c.expected,
+        }
+        for c in compliance.checks
+    ]
+    if rows:
+        st.dataframe(rows, use_container_width=True, hide_index=True)
+    else:
+        st.info(f"Chưa khai báo luật nghiệp vụ cho {compliance.form_type}.")
+
+    from ocr_idp.compliance.report import to_docx, to_pdf
+
+    d1, d2 = st.columns(2)
+    d1.download_button(
+        "Tải biên bản DOCX", to_docx(compliance),
+        file_name=f"compliance-{compliance.form_type}.docx",
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+    try:
+        pdf_bytes = to_pdf(compliance)
+        d2.download_button(
+            "Tải biên bản PDF", pdf_bytes,
+            file_name=f"compliance-{compliance.form_type}.pdf", mime="application/pdf",
+        )
+    except RuntimeError as exc:
+        d2.warning(str(exc))
 
 
 main()

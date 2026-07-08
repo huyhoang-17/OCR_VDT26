@@ -1,0 +1,39 @@
+fields:
+  report_date: NgaytaobaocaozzValue
+  latest_change: NgaythaydoisoGCNgannhatzzValue
+  charter_capital: VondieulezzValue
+  outstanding_shares: TongsocophieudangluuhanhzzValue
+  outstanding_value: TonggiatricophieudangluuhanhzzValue
+  par_value: MenhgiacophieuzzValue
+  offer_shares: SoluongcophieudangkychaobanzzValue
+  min_offer_price: GiachaobanthapnhatdukienzzValue
+  planned_raised: TonggiatrivonhuydongdukienzzValue
+rules:
+  - id: eform5.outstanding_value
+    title: Giá trị cổ phiếu lưu hành bằng số lượng nhân mệnh giá
+    severity: error
+    operation: equals_product
+    actual: outstanding_value
+    factors: [outstanding_shares, par_value]
+    message: Tổng giá trị cổ phiếu lưu hành không khớp số lượng nhân mệnh giá.
+  - id: eform5.planned_capital
+    title: Vốn huy động dự kiến bằng số cổ phiếu chào bán nhân giá tối thiểu
+    severity: error
+    operation: equals_product
+    actual: planned_raised
+    factors: [offer_shares, min_offer_price]
+    message: Tổng vốn huy động dự kiến không khớp số lượng và giá chào bán.
+  - id: eform5.raised_within_charter
+    title: Vốn huy động dự kiến không vượt vốn điều lệ
+    severity: warning
+    operation: less_or_equal
+    left: planned_raised
+    right: charter_capital
+    message: Vốn huy động dự kiến vượt vốn điều lệ hiện tại.
+  - id: eform5.report_after_change
+    title: Ngày báo cáo không trước lần thay đổi giấy chứng nhận gần nhất
+    severity: error
+    operation: date_order
+    earlier: latest_change
+    later: report_date
+    message: Ngày báo cáo trước ngày thay đổi giấy chứng nhận gần nhất.

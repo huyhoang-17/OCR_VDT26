@@ -1,0 +1,30 @@
+fields:
+  document_date: NgaytaogiayzzValue
+  management_license_date: NgaycapGPzzValue
+  bank_license_date: ngaycapGPTLnganhangzzValue
+  custody_certificate_date: ngaycapchungnhanluukyzzValue
+rules:
+  - id: eform100.document_after_management_license
+    title: Ngày lập giấy không trước giấy phép công ty quản lý quỹ
+    severity: error
+    operation: date_order
+    earlier: management_license_date
+    later: document_date
+    mutation_alias: management_license_date
+    message: Ngày lập giấy trước ngày cấp giấy phép công ty quản lý quỹ.
+  - id: eform100.document_after_bank_license
+    title: Ngày lập giấy không trước giấy phép ngân hàng giám sát
+    severity: error
+    operation: date_order
+    earlier: bank_license_date
+    later: document_date
+    eval_mutation: false
+    message: Ngày lập giấy trước ngày cấp giấy phép ngân hàng giám sát.
+  - id: eform100.document_after_custody_certificate
+    title: Ngày lập giấy không trước chứng nhận lưu ký
+    severity: error
+    operation: date_order
+    earlier: custody_certificate_date
+    later: document_date
+    eval_mutation: false
+    message: Ngày lập giấy trước ngày cấp chứng nhận lưu ký.

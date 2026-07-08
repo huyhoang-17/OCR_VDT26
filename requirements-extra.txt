@@ -7,6 +7,10 @@
 # --- LLM extraction (Claude) ---
 anthropic>=0.39
 
+# --- LLM tóm tắt biên bản tuân thủ (không thực hiện tính toán) ---
+openai>=1.0
+google-genai>=1.0
+
 # --- Demo: REST API + Web ---
 fastapi>=0.110
 uvicorn[standard]>=0.27

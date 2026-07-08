@@ -83,6 +83,23 @@ class ValidationConfig(BaseModel):
     date_output_format: str = "%Y-%m-%d"
 
 
+class ComplianceSummaryConfig(BaseModel):
+    """LLM chỉ diễn đạt kết quả business-rule engine đã tính sẵn."""
+
+    provider: str = "deterministic"  # deterministic | openai | gemini
+    openai_model: str = "gpt-5.4-mini"
+    gemini_model: str = "gemini-3-flash-preview"
+    max_output_tokens: int = 700
+
+
+class ComplianceConfig(BaseModel):
+    """Tầng nghiệp vụ sau OCR/trích xuất."""
+
+    enabled: bool = True
+    rules_dir: str | None = None
+    summary: ComplianceSummaryConfig = Field(default_factory=ComplianceSummaryConfig)
+
+
 # --------------------------------------------------------------------------- #
 # Cấu hình tổng
 # --------------------------------------------------------------------------- #
@@ -97,6 +114,7 @@ class AppConfig(BaseModel):
     ocr: OCRConfig = Field(default_factory=OCRConfig)
     extraction: ExtractionConfig = Field(default_factory=ExtractionConfig)
     validation: ValidationConfig = Field(default_factory=ValidationConfig)
+    compliance: ComplianceConfig = Field(default_factory=ComplianceConfig)
 
     # -- Tiện ích đường dẫn -------------------------------------------------- #
     @property
@@ -117,6 +135,8 @@ _ENV_OVERRIDES: dict[str, tuple[str, ...]] = {
     "OCRIDP_DATA_DIR": ("data_dir",),
     "OCRIDP_OUTPUT_DIR": ("output_dir",),
     "OCRIDP_OCR_ENGINE": ("ocr", "engine"),
+    "OCRIDP_COMPLIANCE_SUMMARY_PROVIDER": ("compliance", "summary", "provider"),
+    "OCRIDP_COMPLIANCE_GEMINI_MODEL": ("compliance", "summary", "gemini_model"),
 }
 
 

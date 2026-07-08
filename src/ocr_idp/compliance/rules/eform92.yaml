@@ -1,0 +1,31 @@
+fields:
+  license_date: NgaycapGPzzValue
+  offering_certificate_date: NgaycapGCNdkychaobanzzValue
+  charter_capital: VondieulezzValue
+  fund_units: SoluongCCquyzzValue
+  unit_par_value: MenhgiaCCquyzzValue
+  lots: SoloCCquyzzValue
+  units_per_lot: SoCCquytrong1lozzValue
+rules:
+  - id: eform92.charter_capital
+    title: Vốn điều lệ bằng số chứng chỉ quỹ nhân mệnh giá
+    severity: error
+    operation: equals_product
+    actual: charter_capital
+    factors: [fund_units, unit_par_value]
+    message: Vốn điều lệ không khớp số chứng chỉ quỹ nhân mệnh giá.
+  - id: eform92.lot_reconciliation
+    title: Tổng chứng chỉ quỹ bằng số lô nhân số chứng chỉ mỗi lô
+    severity: error
+    operation: equals_product
+    actual: fund_units
+    factors: [lots, units_per_lot]
+    mutation_alias: lots
+    message: Tổng chứng chỉ quỹ không khớp quy mô lô.
+  - id: eform92.offering_after_license
+    title: Giấy chứng nhận chào bán không trước giấy phép hoạt động
+    severity: error
+    operation: date_order
+    earlier: license_date
+    later: offering_certificate_date
+    message: Ngày cấp giấy chứng nhận chào bán trước ngày cấp giấy phép hoạt động.

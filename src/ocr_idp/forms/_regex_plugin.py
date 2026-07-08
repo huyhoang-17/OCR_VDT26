@@ -23,12 +23,13 @@ map về giá trị chuẩn nên vẫn khớp; số/ngày/mã đọc tốt.
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Any
 
 from ..config import AppConfig
 from ..extract.base import ExtractionContext
 from ..normalize.apply import normalize_choice
-from ..normalize.text import clean_spaces
+from ..normalize.text import clean_spaces, strip_accents
 from ..types import ExtractionResult, FieldStatus, FieldValue
 from .base import FormPlugin
 
@@ -50,7 +51,14 @@ class RegexFormPlugin(FormPlugin):
         return []
 
     def extract(self, context: ExtractionContext, config: AppConfig) -> ExtractionResult:
-        flat = clean_spaces(_ZERO_WIDTH.sub("", "\n".join(ln.text for ln in context.lines)))
+        # `flat`   : text gốc (CÓ dấu nếu engine giữ dấu, vd VietOCR/text-layer).
+        # `flat_u` : bản BỎ DẤU dùng để DÒ nhãn regex (khớp cho cả OCR mất dấu).
+        # strip_accents giữ nguyên độ dài (mỗi ký tự tổ hợp -> 1 ký tự gốc) sau khi
+        # chuẩn hóa NFC, nên span khớp trên flat_u ánh xạ đúng vị trí trên flat →
+        # LẤY GIÁ TRỊ CÓ DẤU. Nhờ vậy extractor không phụ thuộc engine.
+        raw = unicodedata.normalize("NFC", "\n".join(ln.text for ln in context.lines))
+        flat = clean_spaces(_ZERO_WIDTH.sub("", raw))
+        flat_u = strip_accents(flat)
         fields: dict[str, FieldValue] = {}
 
         def put(name: str, value: Any) -> None:
@@ -64,21 +72,23 @@ class RegexFormPlugin(FormPlugin):
 
         for rule in self.RULES:
             key, kind, pattern = rule[0], rule[1], rule[2]
-            m = re.search(pattern, flat)
+            m = re.search(pattern, flat_u)
             if not m:
                 continue
+            s, e = m.span(1) if m.groups() else m.span(0)
+            captured = flat[s:e] if e <= len(flat) else m.group(1)  # giá trị CÓ dấu
             if kind == "date":
                 value: Any = iso_date(m.group(1), m.group(2), m.group(3))
             elif kind == "date_dmy":
                 value = f"{int(m.group(1)):02d}/{int(m.group(2)):02d}/{int(m.group(3)):04d}"
             elif kind in ("digits", "phone"):
-                value = re.sub(r"\D", "", m.group(1))
+                value = re.sub(r"\D", "", captured)
             elif kind == "dong":
-                value = re.sub(r"\D", "", m.group(1)) + " đồng"
+                value = re.sub(r"\D", "", captured) + " đồng"
             elif kind == "choice":
-                value, _ = normalize_choice(m.group(1), rule[3])
+                value, _ = normalize_choice(captured, rule[3])
             else:  # text
-                value = clean_spaces(m.group(1))
+                value = clean_spaces(captured)
             put(f"results.{key}", value)
 
         return ExtractionResult(form_type=self.form_type, fields=fields, warnings=[])

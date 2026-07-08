@@ -1,0 +1,19 @@
+fields:
+  birth_date: NgaythangnamsinhzzValue
+  id_date: NgaycapdinhdanhzzValue
+  certificate_date: NgaycapchungchihanhnghezzValue
+rules:
+  - id: eform85.id_after_birth
+    title: Ngày cấp giấy tờ định danh sau ngày sinh
+    severity: error
+    operation: date_order
+    earlier: birth_date
+    later: id_date
+    message: Ngày cấp giấy tờ định danh trước ngày sinh.
+  - id: eform85.certificate_after_id
+    title: Ngày cấp chứng chỉ hành nghề sau ngày cấp định danh
+    severity: error
+    operation: date_order
+    earlier: id_date
+    later: certificate_date
+    message: Ngày cấp chứng chỉ hành nghề trước ngày cấp giấy tờ định danh.

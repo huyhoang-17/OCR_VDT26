@@ -1,0 +1,81 @@
+fields:
+  document_date: NgaytaogiayzzValue
+  certificate_date: NgaycapGCNDKlapquyzzValue
+  duration_before: SonamthoihantruockhithaydoizzValue
+  old_start: ThoihanhoatdongcutungayzzValue
+  old_end: ThoihanhoatdongcudenngayzzValue
+  duration_after: SonamthoihantruocsauthaydoizzValue
+  new_end: thoihanrutngandenngayzzValue
+  old_capital: VondieulequytruockhithaydoizzValue
+  existing_units: SLCCquycophandangluuhanhzzValue
+  par_value: MenhgiaCCquyzzValue
+  additional_raised: VonhuydongthemzzValue
+  additional_units: SLCCquycophanphathanhthemzzValue
+  issue_price: GiaphathanhcuamotCCquycophanzzValue
+  post_capital: VondieulequytruocsauthaydoizzValue
+  post_units: SLCCquycophanluuhanhsaukhithaydoizzValue
+  acquired_capital: VondieulecuacongtybisapnhapzzValue
+  acquired_units: SLCCquycophandangluuhanhcuacongtybisapnhapzzValue
+  merged_capital: VondieulecuacongtysaukhisapnhapzzValue
+  merged_units: SLCCquycophandangluuhanhtuviecsapnhapzzValue
+rules:
+  - id: eform94.document_after_certificate
+    title: Ngày lập giấy không trước ngày cấp giấy chứng nhận lập quỹ
+    severity: error
+    operation: date_order
+    earlier: certificate_date
+    later: document_date
+    message: Ngày lập giấy trước ngày cấp giấy chứng nhận lập quỹ.
+  - id: eform94.old_duration
+    title: Thời hạn cũ khớp ngày bắt đầu và ngày kết thúc
+    severity: error
+    operation: years_between
+    start: old_start
+    end: old_end
+    years: duration_before
+    tolerance_days: 1
+    message: Số năm thời hạn cũ không khớp khoảng ngày đã khai.
+  - id: eform94.new_duration
+    title: Thời hạn sau thay đổi khớp ngày bắt đầu và ngày kết thúc mới
+    severity: error
+    operation: years_between
+    start: old_start
+    end: new_end
+    years: duration_after
+    tolerance_days: 1
+    message: Số năm thời hạn mới không khớp khoảng ngày đã khai.
+  - id: eform94.old_capital_product
+    title: Vốn điều lệ trước thay đổi bằng số chứng chỉ quỹ nhân mệnh giá
+    severity: error
+    operation: equals_product
+    actual: old_capital
+    factors: [existing_units, par_value]
+    message: Vốn điều lệ trước thay đổi không khớp số lượng nhân mệnh giá.
+  - id: eform94.additional_capital_product
+    title: Vốn huy động thêm bằng số chứng chỉ phát hành thêm nhân giá phát hành
+    severity: error
+    operation: equals_product
+    actual: additional_raised
+    factors: [additional_units, issue_price]
+    message: Vốn huy động thêm không khớp số lượng phát hành thêm nhân giá phát hành.
+  - id: eform94.post_unit_reconciliation
+    title: Số chứng chỉ sau thay đổi bằng số hiện có cộng phát hành thêm
+    severity: error
+    operation: sum_equals
+    total: post_units
+    parts: [existing_units, additional_units]
+    message: Số chứng chỉ quỹ sau thay đổi không khớp các cấu phần.
+  - id: eform94.post_capital_product
+    title: Vốn điều lệ sau thay đổi bằng số chứng chỉ sau thay đổi nhân mệnh giá
+    severity: error
+    operation: equals_product
+    actual: post_capital
+    factors: [post_units, par_value]
+    message: Vốn điều lệ sau thay đổi không khớp số chứng chỉ nhân mệnh giá.
+  - id: eform94.merged_capital_reconciliation
+    title: Vốn sau sáp nhập bằng vốn sau thay đổi cộng vốn quỹ bị sáp nhập
+    severity: warning
+    operation: sum_equals
+    total: merged_capital
+    parts: [post_capital, acquired_capital]
+    message: Vốn sau sáp nhập không khớp các cấu phần vốn đã khai.

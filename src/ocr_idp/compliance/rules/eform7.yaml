@@ -1,0 +1,66 @@
+fields:
+  report_date: NgaybaocaozzValue
+  certificate_change: NgaythaydoiGCNTCPHzzValue
+  par_value: MenhgiatraiphieuzzValue
+  offer_quantity: SoluongtraiphieudangkychaobanzzValue
+  offer_total: TonggiatriTPchaobantheoMGzzValue
+  secured_value: GiatriTPduocbaodamzzValue
+  guarantee_value: GiatribaolanhzzValue
+  collateral_value: GiatritaisanbaodamzzValue
+  outstanding_total: TonggiatriTPluuhanhTongzzValue
+  outstanding_public: TonggiatriTPluuhanhCCzzValue
+  outstanding_private: TonggiatriTPluuhanhRLzzValue
+  raised_total: TonggiatriTPhuydong12thangTongzzValue
+  raised_public: TonggiatriTPhuydong12thangCCzzValue
+  raised_private: TonggiatriTPhuydong12thangRLzzValue
+rules:
+  - id: eform7.offer_face_value
+    title: Tổng giá trị chào bán bằng số trái phiếu nhân mệnh giá
+    severity: error
+    operation: equals_product
+    actual: offer_total
+    factors: [offer_quantity, par_value]
+    mutation_alias: offer_quantity
+    message: Tổng giá trị trái phiếu chào bán không khớp số lượng nhân mệnh giá.
+  - id: eform7.secured_covers_offer
+    title: Giá trị trái phiếu được bảo đảm đủ bao phủ đợt chào bán
+    severity: error
+    operation: less_or_equal
+    left: offer_total
+    right: secured_value
+    message: Giá trị được bảo đảm thấp hơn tổng giá trị chào bán.
+  - id: eform7.guarantee_covers_offer
+    title: Giá trị bảo lãnh đủ bao phủ đợt chào bán
+    severity: warning
+    operation: less_or_equal
+    left: offer_total
+    right: guarantee_value
+    message: Giá trị bảo lãnh thấp hơn tổng giá trị chào bán.
+  - id: eform7.collateral_covers_secured
+    title: Giá trị tài sản bảo đảm đủ bao phủ nghĩa vụ được bảo đảm
+    severity: error
+    operation: less_or_equal
+    left: secured_value
+    right: collateral_value
+    message: Giá trị tài sản bảo đảm thấp hơn nghĩa vụ được bảo đảm.
+  - id: eform7.outstanding_reconciliation
+    title: Tổng trái phiếu lưu hành bằng công chúng cộng riêng lẻ
+    severity: error
+    operation: sum_equals
+    total: outstanding_total
+    parts: [outstanding_public, outstanding_private]
+    message: Tổng trái phiếu lưu hành không khớp hai cấu phần.
+  - id: eform7.raised_reconciliation
+    title: Tổng huy động 12 tháng bằng công chúng cộng riêng lẻ
+    severity: error
+    operation: sum_equals
+    total: raised_total
+    parts: [raised_public, raised_private]
+    message: Tổng huy động 12 tháng không khớp hai cấu phần.
+  - id: eform7.report_after_certificate_change
+    title: Ngày báo cáo không trước ngày thay đổi giấy chứng nhận
+    severity: error
+    operation: date_order
+    earlier: certificate_change
+    later: report_date
+    message: Ngày báo cáo trước ngày thay đổi giấy chứng nhận.

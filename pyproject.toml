@@ -35,6 +35,7 @@ dependencies = [
   "rapidocr-onnxruntime>=1.3",
   "onnxruntime>=1.16",
   "pytesseract>=0.3.10",
+  "reportlab>=4.0",        # xuất biên bản tuân thủ PDF (nhúng font Unicode)
 ]
 
 [project.optional-dependencies]
@@ -44,6 +45,8 @@ easyocr = ["easyocr>=1.7"]
 paddle  = ["paddleocr>=2.7", "paddlepaddle>=2.6"]
 # Trích xuất bằng LLM (Claude)
 llm     = ["anthropic>=0.39"]
+# LLM chỉ viết tóm tắt biên bản; mọi phép tính vẫn do business-rule engine.
+compliance-llm = ["openai>=1.0", "google-genai>=1.0"]
 # Demo
 api     = ["fastapi>=0.110", "uvicorn[standard]>=0.27", "python-multipart>=0.0.9"]
 web     = ["streamlit>=1.31"]
@@ -52,6 +55,7 @@ dev     = ["pytest>=7.4", "pytest-cov>=4.1"]
 # Cài tất cả (trừ engine nặng paddle/torch — thêm thủ công nếu cần)
 full    = [
   "anthropic>=0.39",
+  "openai>=1.0", "google-genai>=1.0",
   "fastapi>=0.110", "uvicorn[standard]>=0.27", "python-multipart>=0.0.9",
   "streamlit>=1.31",
   "pytest>=7.4", "pytest-cov>=4.1",
@@ -66,6 +70,7 @@ where = ["src"]
 [tool.setuptools.package-data]
 # Đóng gói schema + cấu hình trích xuất của từng plugin biểu mẫu
 "ocr_idp.forms" = ["**/*.json", "**/*.yaml"]
+"ocr_idp.compliance" = ["rules/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

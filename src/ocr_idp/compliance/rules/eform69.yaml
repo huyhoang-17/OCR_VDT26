@@ -1,0 +1,38 @@
+fields:
+  document_date: NgaytaogiayzzValue
+  license_date: NgaycapGPzzValue
+  old_capital: VondieulecuzzValue
+  new_capital: VondieulemoizzValue
+  old_birth: NgaysinhnguoidaidiencuzzValue
+  old_id_date: NgaycapCMNDHochieucuanguoidaidiencuzzValue
+  new_birth: NgaysinhnguoidaidienmoizzValue
+  new_id_date: NgaycapCMNDHochieucuanguoidaidienmoizzValue
+rules:
+  - id: eform69.capital_not_decreased
+    title: Vốn điều lệ mới không thấp hơn vốn điều lệ cũ
+    severity: warning
+    operation: less_or_equal
+    left: old_capital
+    right: new_capital
+    message: Vốn điều lệ mới thấp hơn vốn điều lệ cũ.
+  - id: eform69.document_after_license
+    title: Ngày lập giấy không trước ngày cấp giấy phép
+    severity: error
+    operation: date_order
+    earlier: license_date
+    later: document_date
+    message: Ngày lập giấy trước ngày cấp giấy phép.
+  - id: eform69.old_representative_id_after_birth
+    title: Ngày cấp định danh người đại diện cũ sau ngày sinh
+    severity: error
+    operation: date_order
+    earlier: old_birth
+    later: old_id_date
+    message: Ngày cấp định danh người đại diện cũ trước ngày sinh.
+  - id: eform69.new_representative_id_after_birth
+    title: Ngày cấp định danh người đại diện mới sau ngày sinh
+    severity: error
+    operation: date_order
+    earlier: new_birth
+    later: new_id_date
+    message: Ngày cấp định danh người đại diện mới trước ngày sinh.

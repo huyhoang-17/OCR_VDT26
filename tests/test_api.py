@@ -78,3 +78,47 @@ def test_process_unknown_form_is_400() -> None:
         data={"form_type": "khong_ton_tai"},
     )
     assert r.status_code == 400
+
+
+def _compliance_json() -> dict:
+    return {
+        "form_id": "eform1",
+        "results": {
+            "NgaythangnamzzValue": "2026-04-21",
+            "NgaycapGCNUBCKzzValue": "2025-10-15",
+            "MenhgiacophieuzzValue": "10000",
+            "TongsoluongcophieuphathanhzzValue": "20000000",
+            "TongsovondahuydongzzValue": "200000000000",
+            "SovondahuydongzzValue": "150000000000",
+            "NgayketthucdotchaobanzzValue": "2025-11-30",
+        },
+    }
+
+
+def test_compliance_check_endpoint() -> None:
+    r = client.post(
+        "/compliance/check",
+        json={"document": _compliance_json(), "provider": "deterministic"},
+    )
+    assert r.status_code == 200
+    report = r.json()["report"]
+    assert report["overall_status"] == "compliant"
+    assert report["counts"]["pass"] == 4
+
+
+def test_compliance_report_downloads_docx() -> None:
+    r = client.post(
+        "/compliance/report?format=docx",
+        json={"document": _compliance_json(), "provider": "deterministic"},
+    )
+    assert r.status_code == 200
+    assert r.content.startswith(b"PK")
+    assert "application/vnd.openxmlformats" in r.headers["content-type"]
+
+
+def test_compliance_rejects_json_without_results() -> None:
+    r = client.post(
+        "/compliance/check",
+        json={"document": {"form_id": "eform1"}, "provider": "deterministic"},
+    )
+    assert r.status_code == 400

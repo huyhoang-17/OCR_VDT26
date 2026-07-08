@@ -28,3 +28,13 @@ class ProcessResponse(BaseModel):
     warnings: list[str]
     timings_ms: dict[str, float]
     ocr_engine: list[str]
+
+
+class ComplianceRequest(BaseModel):
+    document: dict[str, Any]
+    provider: str = "deterministic"  # deterministic | openai | gemini
+    model: Optional[str] = None
+
+
+class ComplianceResponse(BaseModel):
+    report: dict[str, Any]

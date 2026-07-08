@@ -7,6 +7,8 @@ Lệnh:
     ocr-idp process <file>   # chạy pipeline 1 file -> JSON
     ocr-idp batch <dir>      # chạy hàng loạt cả thư mục
     ocr-idp evaluate         # đánh giá so ground-truth -> MD/CSV
+    ocr-idp check-compliance # kiểm tra JSON + sinh biên bản DOCX/PDF
+    ocr-idp evaluate-compliance # benchmark luật bằng lỗi nhân tạo
     ocr-idp serve-api        # chạy REST API (FastAPI)
     ocr-idp serve-web        # chạy web demo (Streamlit)
 
@@ -228,6 +230,92 @@ def batch(
     console.print(f"[green]Xong {ok}/{len(files)} file[/green] -> [cyan]{out_dir}[/cyan]")
 
 
+@app.command(name="check-compliance")
+def check_compliance(
+    input_json: Path = typer.Argument(..., help="JSON đã trích xuất (coi như chính xác)."),
+    provider: Optional[str] = typer.Option(
+        None, "--provider", "-p", help="deterministic | openai | gemini."
+    ),
+    model: Optional[str] = typer.Option(None, "--model", help="Ghi đè model tóm tắt."),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Ghi report JSON."),
+    docx: Optional[Path] = typer.Option(None, "--docx", help="Ghi biên bản DOCX."),
+    pdf: Optional[Path] = typer.Option(None, "--pdf", help="Ghi biên bản PDF."),
+    config: Optional[Path] = typer.Option(None, "--config", "-c"),
+) -> None:
+    """Kiểm tra ràng buộc nghiệp vụ liên-trường và sinh biên bản."""
+    import json
+
+    from .compliance.report import to_docx, to_pdf
+    from .compliance.service import build_compliance_report
+
+    if not input_json.is_file():
+        console.print(f"[red]Không tìm thấy JSON: {input_json}[/red]")
+        raise typer.Exit(code=1)
+    try:
+        document = json.loads(input_json.read_text(encoding="utf-8"))
+        report = build_compliance_report(
+            document, config=load_config(config), provider=provider, model=model
+        )
+    except (json.JSONDecodeError, ValueError, RuntimeError) as exc:
+        console.print(f"[red]Lỗi: {exc}[/red]")
+        raise typer.Exit(code=1)
+
+    data = json.dumps(report.to_dict(), ensure_ascii=False, indent=2)
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(data, encoding="utf-8")
+    else:
+        print(data)
+    if docx:
+        docx.parent.mkdir(parents=True, exist_ok=True)
+        docx.write_bytes(to_docx(report))
+    if pdf:
+        pdf.parent.mkdir(parents=True, exist_ok=True)
+        pdf.write_bytes(to_pdf(report))
+
+    table = Table(title=f"Tuân thủ — {report.form_type}", header_style="bold")
+    for col in ("Kết luận", "Đạt", "Vi phạm", "Chưa đánh giá", "Nguồn tóm tắt"):
+        table.add_column(col)
+    counts = report.counts
+    table.add_row(
+        report.overall_status, str(counts["pass"]), str(counts["violation"]),
+        str(counts["skipped"]), report.summary_source,
+    )
+    console.print(table)
+
+
+@app.command(name="evaluate-compliance")
+def evaluate_compliance(
+    data_dir: Path = typer.Option(
+        Path("data/ground_truth"), "--data", help="Thư mục expect_*.json."
+    ),
+    out_dir: Path = typer.Option(Path("outputs"), "--out", help="Thư mục báo cáo."),
+    config: Optional[Path] = typer.Option(None, "--config", "-c"),
+) -> None:
+    """Chèn lỗi nghiệp vụ nhân tạo và đo precision/recall/F1, tách khỏi OCR."""
+    import json
+
+    from .compliance.engine import ComplianceEngine
+    from .compliance.evaluation import evaluate_mutations, load_documents, to_markdown
+
+    documents = load_documents(data_dir)
+    if not documents:
+        console.print(f"[yellow]Không tìm thấy expect_*.json trong {data_dir}[/yellow]")
+        raise typer.Exit(code=0)
+    cfg = load_config(config)
+    report = evaluate_mutations(documents, ComplianceEngine(cfg.compliance.rules_dir))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    json_path = out_dir / "eval_compliance.json"
+    md_path = out_dir / "eval_compliance.md"
+    json_path.write_text(json.dumps(report.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(to_markdown(report), encoding="utf-8")
+    console.print(
+        f"[green]{len(report.cases)} ca[/green] | P/R/F1 = "
+        f"[bold]{report.precision:.1%}/{report.recall:.1%}/{report.f1:.1%}[/bold]"
+    )
+    console.print(f"Đã ghi: [cyan]{json_path}[/cyan], [cyan]{md_path}[/cyan]")
+
+
 @app.command(name="serve-api")
 def serve_api(
     host: str = typer.Option("127.0.0.1", "--host", help="Địa chỉ bind."),
@@ -266,6 +354,7 @@ def serve_web(
 def evaluate(
     kind: str = typer.Option("pdf", "--kind", "-k", help="pdf (dùng text-layer nếu có) | scan (ép OCR mọi trang)."),
     form: Optional[str] = typer.Option(None, "--form", "-f", help="Chỉ đánh giá 1 form_type, vd eform7 (mặc định: tất cả)."),
+    engine: Optional[str] = typer.Option(None, "--engine", "-e", help="Ghi đè engine OCR: rapidocr | vietocr | tesseract | easyocr | paddle."),
     data_root: Path = typer.Option(Path("data"), "--data", help="Thư mục data (raw/ + ground_truth/)."),
     out_dir: Path = typer.Option(Path("outputs"), "--out", help="Thư mục ghi báo cáo."),
     config: Optional[Path] = typer.Option(None, "--config", "-c"),
@@ -274,9 +363,14 @@ def evaluate(
     from .eval.report import evaluate_dataset, write_reports
 
     cfg = load_config(config)
+    if engine:
+        cfg.ocr.engine = engine
     forms = [form] if form else None
-    with console.status(f"[cyan]Đang đánh giá ({kind})...[/cyan]"):
+    with console.status(f"[cyan]Đang đánh giá ({kind}, engine={cfg.ocr.engine})...[/cyan]"):
         report = evaluate_dataset(config=cfg, kind=kind, forms=forms, data_root=str(data_root))
+    # Tách tên báo cáo theo engine để so sánh nhiều engine (eval_scan-vietocr.md ...)
+    if engine:
+        report.kind = f"{kind}-{engine}"
 
     if not report.samples:
         console.print(

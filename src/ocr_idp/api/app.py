@@ -17,13 +17,20 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
+from fastapi.responses import RedirectResponse, Response
 
 from .. import __version__
 from ..config import AppConfig, load_config
 from ..logging_conf import get_logger
-from .models import EnginesResponse, FormsResponse, HealthResponse, ProcessResponse
+from .models import (
+    ComplianceRequest,
+    ComplianceResponse,
+    EnginesResponse,
+    FormsResponse,
+    HealthResponse,
+    ProcessResponse,
+)
 
 logger = get_logger(__name__)
 
@@ -73,6 +80,48 @@ def engines() -> EnginesResponse:
     from ..ocr.registry import available_engines
 
     return EnginesResponse(engines=available_engines(), default=_config().ocr.engine)
+
+
+@app.post("/compliance/check", response_model=ComplianceResponse)
+def compliance_check(request: ComplianceRequest) -> ComplianceResponse:
+    """Kiểm tra ràng buộc liên-trường trên JSON đã trích xuất."""
+    from ..compliance.service import build_compliance_report
+
+    try:
+        report = build_compliance_report(
+            request.document, config=_config(), provider=request.provider, model=request.model
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return ComplianceResponse(report=report.to_dict())
+
+
+@app.post("/compliance/report")
+def compliance_report(
+    request: ComplianceRequest,
+    format: str = Query("docx", pattern="^(docx|pdf)$"),
+) -> Response:
+    """Sinh biên bản DOCX/PDF từ đúng kết quả rule engine."""
+    from ..compliance.report import to_docx, to_pdf
+    from ..compliance.service import build_compliance_report
+
+    try:
+        report = build_compliance_report(
+            request.document, config=_config(), provider=request.provider, model=request.model
+        )
+        content = to_docx(report) if format == "docx" else to_pdf(report)
+    except (ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    media = (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        if format == "docx" else "application/pdf"
+    )
+    filename = f"compliance-{report.form_type}-{report.report_id}.{format}"
+    return Response(
+        content=content,
+        media_type=media,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.post("/process", response_model=ProcessResponse)

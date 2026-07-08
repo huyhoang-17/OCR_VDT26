@@ -1,0 +1,39 @@
+fields:
+  report_date: NgaythangnamzzValue
+  certificate_date: NgaycapGCNUBCKzzValue
+  par_value: MenhgiacophieuzzValue
+  issued_shares: TongsoluongcophieuphathanhzzValue
+  total_raised: TongsovondahuydongzzValue
+  raised_amount: SovondahuydongzzValue
+  offering_end: NgayketthucdotchaobanzzValue
+rules:
+  - id: eform1.capital_product
+    title: Tổng vốn huy động bằng số cổ phiếu nhân mệnh giá
+    severity: error
+    operation: equals_product
+    actual: total_raised
+    factors: [issued_shares, par_value]
+    relative_tolerance: 0.01
+    message: Tổng vốn huy động không khớp số lượng cổ phiếu nhân mệnh giá.
+  - id: eform1.raised_within_total
+    title: Số vốn đã huy động không vượt tổng vốn huy động
+    severity: error
+    operation: less_or_equal
+    left: raised_amount
+    right: total_raised
+    mutation_side: left
+    message: Số vốn đã huy động vượt tổng vốn huy động.
+  - id: eform1.offering_after_certificate
+    title: Ngày kết thúc chào bán không trước ngày cấp giấy chứng nhận
+    severity: error
+    operation: date_order
+    earlier: certificate_date
+    later: offering_end
+    message: Ngày kết thúc đợt chào bán trước ngày cấp giấy chứng nhận.
+  - id: eform1.report_after_offering
+    title: Ngày báo cáo không trước ngày kết thúc chào bán
+    severity: error
+    operation: date_order
+    earlier: offering_end
+    later: report_date
+    message: Ngày báo cáo trước ngày kết thúc đợt chào bán.

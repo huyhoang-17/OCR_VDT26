@@ -1,0 +1,70 @@
+fields:
+  org_domestic: SoluongnhadautuTochucTrongnuoczzText
+  org_foreign: SoluongnhadautuTochucNuocngoaizzText
+  org_total: SoluongnhadautuTochucTongzzText
+  org_units_domestic: SoluongchungchiquyTochucTrongnuoczzText
+  org_units_foreign: SoluongchungchiquyTochucNgoainuoczzText
+  org_units_total: SoluongchungchiquyTochucTongzzText
+  org_ratio_domestic: TylevongopTochucTrongnuoczzText
+  org_ratio_foreign: TylevongopTochucNgoainuoczzText
+  org_ratio_total: TylevongopTochucTongzzText
+  individual_domestic: SoluongnhadautuCanhanTrongnuoczzText
+  individual_foreign: SoluongnhadautuCanhanNuocngoaizzText
+  individual_total: SoluongnhadautuCanhanTongzzText
+  individual_units_domestic: SoluongchungchiquyCanhanTrongnuoczzText
+  individual_units_foreign: SoluongchungchiquyCanhanNgoainuoczzText
+  individual_units_total: SoluongchungchiquyCanhanTongzzText
+  individual_ratio_domestic: TylevongopCanhanTrongnuoczzText
+  individual_ratio_foreign: TylevongopCanhanNuocngoaizzText
+  individual_ratio_total: TylevongopCanhanTongzzText
+rules:
+  - id: eform93.org_investor_count
+    title: Số nhà đầu tư tổ chức trong nước cộng nước ngoài bằng tổng
+    severity: error
+    operation: sum_equals
+    total: org_total
+    parts: [org_domestic, org_foreign]
+    null_as_zero: true
+    message: Tổng số nhà đầu tư tổ chức không khớp các cấu phần.
+  - id: eform93.org_unit_count
+    title: Chứng chỉ quỹ tổ chức trong nước cộng nước ngoài bằng tổng
+    severity: error
+    operation: sum_equals
+    total: org_units_total
+    parts: [org_units_domestic, org_units_foreign]
+    null_as_zero: true
+    message: Tổng chứng chỉ quỹ của tổ chức không khớp các cấu phần.
+  - id: eform93.org_ratio
+    title: Tỷ lệ góp vốn tổ chức trong nước cộng nước ngoài bằng tổng
+    severity: error
+    operation: sum_equals
+    total: org_ratio_total
+    parts: [org_ratio_domestic, org_ratio_foreign]
+    null_as_zero: true
+    absolute_tolerance: 0.01
+    message: Tổng tỷ lệ góp vốn của tổ chức không khớp các cấu phần.
+  - id: eform93.individual_investor_count
+    title: Số nhà đầu tư cá nhân trong nước cộng nước ngoài bằng tổng
+    severity: error
+    operation: sum_equals
+    total: individual_total
+    parts: [individual_domestic, individual_foreign]
+    null_as_zero: true
+    message: Tổng số nhà đầu tư cá nhân không khớp các cấu phần.
+  - id: eform93.individual_unit_count
+    title: Chứng chỉ quỹ cá nhân trong nước cộng nước ngoài bằng tổng
+    severity: error
+    operation: sum_equals
+    total: individual_units_total
+    parts: [individual_units_domestic, individual_units_foreign]
+    null_as_zero: true
+    message: Tổng chứng chỉ quỹ của cá nhân không khớp các cấu phần.
+  - id: eform93.individual_ratio
+    title: Tỷ lệ góp vốn cá nhân trong nước cộng nước ngoài bằng tổng
+    severity: error
+    operation: sum_equals
+    total: individual_ratio_total
+    parts: [individual_ratio_domestic, individual_ratio_foreign]
+    null_as_zero: true
+    absolute_tolerance: 0.01
+    message: Tổng tỷ lệ góp vốn của cá nhân không khớp các cấu phần.

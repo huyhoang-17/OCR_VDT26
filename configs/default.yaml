@@ -52,3 +52,15 @@ extraction:
 validation:
   min_confidence: 0.6      # dưới ngưỡng -> gắn cờ cần người kiểm tra
   date_output_format: "%Y-%m-%d"
+
+# --- [6] Kiểm tra nghiệp vụ & biên bản tuân thủ ----------------------------
+compliance:
+  enabled: true
+  # null = dùng YAML đóng gói trong src/ocr_idp/compliance/rules/
+  rules_dir: null
+  summary:
+    # deterministic không gọi mạng; openai/gemini cần API key tương ứng.
+    provider: deterministic
+    openai_model: gpt-5.4-mini
+    gemini_model: gemini-3-flash-preview
+    max_output_tokens: 700
